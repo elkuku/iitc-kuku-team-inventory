@@ -1,0 +1,17 @@
+{{#eachInMap items}}
+    <tr>
+        <td class="label-container">
+            <a href="javascript:"
+               onclick="window.zoomToAndShowPortal('{{key}}',[{{value.portal.lat}},{{value.portal.lng}}]);">
+                {{value.portal.title}}
+            </a>
+        </td>
+        <td>{{distanceToCenter value.portal.lat value.portal.lng}}</td>
+        <td class="cnt count-container">{{value.total}}</td>
+        <td>
+            {{#eachInMap value.agentCounts}}
+                {{key}}: <span class="cnt">{{value}}</span><br>
+            {{/eachInMap}}
+        </td>
+    </tr>
+{{/eachInMap}}

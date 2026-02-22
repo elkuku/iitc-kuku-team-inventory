@@ -1,15 +1,30 @@
 // @ts-expect-error "Import attributes are only supported when the --module option is set to esnext, nodenext, or preserve"
 import dialogTemplate from '../tpl/dialog.hbs' with {type: 'text'}
+// @ts-expect-error "Import attributes are only supported when the --module option is set to esnext, nodenext, or preserve"
+import itemsImageTemplate from '../tpl/_items-image.hbs' with {type: 'text'}
+// @ts-expect-error "Import attributes are only supported when the --module option is set to esnext, nodenext, or preserve"
+import itemsLabelTemplate from '../tpl/_items-label.hbs' with {type: 'text'}
+// @ts-expect-error "Import attributes are only supported when the --module option is set to esnext, nodenext, or preserve"
+import keysTableTemplate from '../tpl/_keys-table.hbs' with {type: 'text'}
+// @ts-expect-error "Import attributes are only supported when the --module option is set to esnext, nodenext, or preserve"
+import agentsListTemplate from '../tpl/_agents-list.hbs' with {type: 'text'}
 
-import {HelperHandlebars} from '../../types/Types'
+import {translateKey} from '../../types/key-translations'
+import {AgentInventory, HelperHandlebars, KeyInfo, Team} from '../../types/Types'
+import {InventoryHelper} from './InventoryHelper'
 
 export class DialogHelper {
 
-    private handlebars: HelperHandlebars
+    private handlebars!: HelperHandlebars
+    private itemsImageTpl!: Handlebars.TemplateDelegate
+    private itemsLabelTpl!: Handlebars.TemplateDelegate
+    private keysTpl!: Handlebars.TemplateDelegate
+    private agentsTpl!: Handlebars.TemplateDelegate
 
     public constructor(
-        private pluginName: string,
-        private title: string,
+        private readonly pluginName: string,
+        private readonly title: string,
+        private readonly inventoryHelper: InventoryHelper,
     ) {}
 
     public getDialog(): JQuery {
@@ -20,25 +35,294 @@ export class DialogHelper {
             throw new Error(`${this.pluginName} - Handlebars helper not found`)
         }
 
-        const template = this.handlebars.compile(dialogTemplate)
+        this.handlebars.registerHelper({
+            eachInMap: (map: Map<any, any>, block: Handlebars.HelperOptions) => {
+                let out = ''
+                if (map instanceof Map) {
+                    for (const [key, value] of map) {
+                        out += block.fn({key, value})
+                    }
+                }
+                return out
+            },
+            translateKey: (key: string): string => translateKey(key),
+            distanceToCenter: (lat: number, lng: number): string => {
+                const center = window.map.getCenter()
+                const distance = L.latLng(lat, lng).distanceTo(center)
+                if (distance >= 10_000) return `${Math.round(distance / 1000)} km`
+                if (distance >= 1000) return `${Math.round(distance / 100) / 10} km`
+                return `${Math.round(distance)} m`
+            },
+        })
 
-        const data = {
-            plugin: 'window.plugin.' + this.pluginName,
+        this.itemsImageTpl = this.handlebars.compile(itemsImageTemplate)
+        this.itemsLabelTpl = this.handlebars.compile(itemsLabelTemplate)
+        this.keysTpl = this.handlebars.compile(keysTableTemplate)
+        this.agentsTpl = this.handlebars.compile(agentsListTemplate)
+
+        const mainTpl = this.handlebars.compile(dialogTemplate)
+        const html = mainTpl({
+            plugin: `window.plugin.${this.pluginName}`,
             prefix: this.pluginName,
-        }
+        })
 
         return window.dialog({
-           // position: {my: 'top', at: 'top', of: window},
             id: this.pluginName,
             title: this.title,
-            html: template(data),
-            width: 'auto',
-            height: 'auto',
+            html,
+            width: 900,
+            height: 700,
             buttons: [],
         }).parent()
     }
 
-    public updateDialog() {
-        console.log('DialogHelper.updateDialog')
+    public updateAll(teams: Team[], selectedTeamId: string | undefined, agents: AgentInventory[]): void {
+        this.updateTeamSelector(teams, selectedTeamId)
+        const team = selectedTeamId ? (teams.find(t => t.id === selectedTeamId) ?? undefined) : undefined
+        this.updateAgentsList(team)
+        this.updateInventoryPanels(agents)
+    }
+
+    public updateTeamSelector(teams: Team[], selectedTeamId: string | undefined): void {
+        const select = document.getElementById(`${this.pluginName}-team-select`) as HTMLSelectElement | undefined
+        if (!select) return
+
+        while (select.options.length > 1) select.remove(1)
+        select.options[0].selected = !selectedTeamId
+
+        for (const team of teams) {
+            const opt = document.createElement('option')
+            opt.value = team.id
+            opt.text = `${team.name} (${team.agents.length} agent${team.agents.length === 1 ? '' : 's'})`
+            opt.selected = team.id === selectedTeamId
+            select.add(opt)
+        }
+    }
+
+    public updateAgentsList(team: Team | undefined): void {
+        const container = this.getContainer('AgentsList')
+        if (!container) return
+
+        if (!team) {
+            container.innerHTML = '<p>Select a team above to see agents.</p>'
+            return
+        }
+
+        if (team.agents.length === 0) {
+            container.innerHTML = '<p>No agents yet. Import a JSON file to add data.</p>'
+            return
+        }
+
+        const agentData = team.agents.map(agent => ({
+            name: agent.name,
+            importedAt: new Date(agent.importedAt).toLocaleString(),
+            keyCount: agent.keys.reduce((sum, k) => sum + k.total, 0),
+            keyPortals: agent.keys.length,
+        }))
+
+        container.innerHTML = this.agentsTpl({
+            agents: agentData,
+            teamId: team.id,
+            plugin: `window.plugin.${this.pluginName}`,
+        })
+    }
+
+    public updateInventoryPanels(agents: AgentInventory[]): void {
+        if (!this.itemsImageTpl) return
+
+        const resonators = this.inventoryHelper.aggregateItems(agents, 'resonators')
+        const weapons = this.inventoryHelper.aggregateItems(agents, 'weapons')
+        const mods = this.inventoryHelper.aggregateItems(agents, 'mods')
+        const cubes = this.inventoryHelper.aggregateItems(agents, 'cubes')
+        const boosts = this.inventoryHelper.aggregateItems(agents, 'boosts')
+        const keys = this.inventoryHelper.aggregateKeys(agents)
+
+        const cntEquipment = this.processResonators(resonators)
+            + this.processWeapons(weapons)
+            + this.processMods(mods)
+        const cntKeys = this.processKeys(keys)
+        const cntOther = this.processCubes(cubes) + this.processBoosts(boosts)
+
+        this.setCount('cntEquipment', cntEquipment)
+        this.setCount('cntKeys', cntKeys)
+        this.setCount('cntOther', cntOther)
+        this.setCount('cntTotal', cntEquipment + cntKeys + cntOther)
+    }
+
+    // ------------------------------------------------------------------
+    // Private section processors
+    // ------------------------------------------------------------------
+
+    private processResonators(resonators: Map<string, number>): number {
+        const sorted = this.sortByNumericSuffix(resonators)
+        this.getContainer('Resonators').innerHTML = this.itemsImageTpl({items: sorted})
+
+        let total = 0
+        for (const count of resonators.values()) total += count
+        this.setCount('cntResonators', total)
+        return total
+    }
+
+    private processWeapons(weapons: Map<string, number>): number {
+        const bursters = new Map<string, number>()
+        const strikes = new Map<string, number>()
+        let cntBursters = 0, cntStrikes = 0, cntFlips = 0
+
+        for (const [key, value] of weapons) {
+            if (key.startsWith('EMP_BURSTER')) {
+                bursters.set(key, value)
+                cntBursters += value
+            } else if (key.startsWith('ULTRA_STRIKE')) {
+                strikes.set(key, value)
+                cntStrikes += value
+            } else if (key === 'ADA-0' || key === 'JARVIS-0') {
+                strikes.set(key, value)
+                cntFlips += value
+            } else {
+                console.warn('[KuKuTeamInventory] Unknown weapon:', key)
+            }
+        }
+
+        this.getContainer('Bursters').innerHTML = this.itemsImageTpl({items: this.sortByNumericSuffix(bursters)})
+        this.getContainer('Strikes').innerHTML = this.itemsImageTpl({items: this.sortByNumericSuffix(strikes)})
+
+        this.setCount('cntBursters', cntBursters)
+        this.setCount('cntStrikes', cntStrikes)
+        this.setCount('cntFlips', cntFlips)
+
+        const total = cntBursters + cntStrikes + cntFlips
+        this.setCount('cntWeapons', total)
+        return total
+    }
+
+    private processMods(mods: Map<string, number>): number {
+        const shields = new Map<string, number>()
+        const hackMods = new Map<string, number>()
+        const otherMods = new Map<string, number>()
+        let cntShields = 0, cntHack = 0, cntOther = 0
+
+        const rarities = ['COMMON', 'RARE', 'VERY_RARE']
+
+        for (const [key, value] of mods) {
+            if (key.startsWith('RES_SHIELD') || key.startsWith('EXTRA_SHIELD')) {
+                shields.set(key, value)
+                cntShields += value
+            } else if (key.startsWith('HEATSINK') || key.startsWith('MULTIHACK')) {
+                hackMods.set(key, value)
+                cntHack += value
+            } else {
+                otherMods.set(key, value)
+                cntOther += value
+            }
+        }
+
+        this.getContainer('Shields').innerHTML = this.itemsImageTpl({
+            items: this.sortByCompoundKey(shields, ['RES_SHIELD', 'EXTRA_SHIELD'], rarities),
+        })
+        this.getContainer('HackMods').innerHTML = this.itemsImageTpl({
+            items: this.sortByCompoundKey(hackMods, ['HEATSINK', 'MULTIHACK'], rarities),
+        })
+        this.getContainer('OtherMods').innerHTML = this.itemsImageTpl({items: otherMods})
+
+        this.setCount('cntModShields', cntShields)
+        this.setCount('cntModHack', cntHack)
+        this.setCount('cntModOther', cntOther)
+
+        const total = cntShields + cntHack + cntOther
+        this.setCount('cntMods', total)
+        return total
+    }
+
+    private processCubes(cubes: Map<string, number>): number {
+        const sorted = this.sortByNumericSuffix(cubes)
+        this.getContainer('Cubes').innerHTML = this.itemsLabelTpl({items: sorted})
+
+        let total = 0
+        for (const count of cubes.values()) total += count
+        this.setCount('cntCubes', total)
+        return total
+    }
+
+    private processBoosts(boosts: Map<string, number>): number {
+        const play = new Map<string, number>()
+        const beacons = new Map<string, number>()
+        const playTypes = new Set(['FRACK', 'APEX', 'BB_BATTLE', 'FW_ENL', 'FW_RES'])
+        let cntPlay = 0, cntBeacons = 0
+
+        for (const [key, value] of boosts) {
+            if (playTypes.has(key)) {
+                play.set(key, value)
+                cntPlay += value
+            } else {
+                beacons.set(key, value)
+                cntBeacons += value
+            }
+        }
+
+        this.getContainer('Boosts-Play').innerHTML = this.itemsLabelTpl({items: play})
+        this.getContainer('Boosts-Beacons').innerHTML = this.itemsLabelTpl({items: beacons})
+
+        this.setCount('cntBoostsPlay', cntPlay)
+        this.setCount('cntBoostsBeacons', cntBeacons)
+
+        const total = cntPlay + cntBeacons
+        this.setCount('cntBoosts', total)
+        return total
+    }
+
+    private processKeys(keys: Map<string, KeyInfo>): number {
+        const container = document.getElementById(`${this.pluginName}-Keys-Container`)
+        if (container) {
+            container.innerHTML = this.keysTpl({items: keys})
+        }
+
+        let total = 0
+        for (const info of keys.values()) total += info.total
+        this.setCount('cntKeysTotal', total)
+        return total
+    }
+
+    // ------------------------------------------------------------------
+    // Helpers
+    // ------------------------------------------------------------------
+
+    private getContainer(name: string): Element {
+        const element = document.getElementById(`${this.pluginName}-${name}-Container`)
+        if (!element) console.warn(`[KuKuTeamInventory] Container not found: ${name}`)
+        return element as Element
+    }
+
+    private setCount(name: string, count: number): void {
+        const element = document.getElementById(`${this.pluginName}-${name}`)
+        if (element) element.textContent = count.toString()
+    }
+
+    private sortByNumericSuffix(map: Map<string, number>): Map<string, number> {
+        return new Map(
+            [...map.entries()].toSorted(([a], [b]) => {
+                const numA = parseInt(/(\d+)$/.exec(a)?.[1] ?? '0', 10)
+                const numB = parseInt(/(\d+)$/.exec(b)?.[1] ?? '0', 10)
+                return numA - numB
+            })
+        )
+    }
+
+    private sortByCompoundKey(
+        map: Map<string, number>,
+        typeOrder: string[],
+        rarityOrder: string[]
+    ): Map<string, number> {
+        return new Map(
+            [...map.entries()].toSorted(([a], [b]) => {
+                const lastA = a.lastIndexOf('-')
+                const lastB = b.lastIndexOf('-')
+                const typeA = lastA === -1 ? a : a.slice(0, lastA)
+                const rarityA = lastA === -1 ? '' : a.slice(lastA + 1)
+                const typeB = lastB === -1 ? b : b.slice(0, lastB)
+                const rarityB = lastB === -1 ? '' : b.slice(lastB + 1)
+                const typeDiff = typeOrder.indexOf(typeA) - typeOrder.indexOf(typeB)
+                return typeDiff === 0 ? rarityOrder.indexOf(rarityA) - rarityOrder.indexOf(rarityB) : typeDiff
+            })
+        )
     }
 }

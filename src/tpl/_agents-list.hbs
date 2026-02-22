@@ -1,0 +1,26 @@
+<table class="inventoryTable agents-table">
+    <thead>
+        <tr>
+            <th>Agent</th>
+            <th>Imported</th>
+            <th>Portals</th>
+            <th>Keys</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {{#each agents}}
+            <tr>
+                <td><strong>{{this.name}}</strong></td>
+                <td style="font-size: 0.85em">{{this.importedAt}}</td>
+                <td class="cnt">{{this.keyPortals}}</td>
+                <td class="cnt">{{this.keyCount}}</td>
+                <td>
+                    <button onclick="{{../plugin}}.deleteAgent('{{../teamId}}', '{{this.name}}')">
+                        Remove
+                    </button>
+                </td>
+            </tr>
+        {{/each}}
+    </tbody>
+</table>

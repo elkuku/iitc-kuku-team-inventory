@@ -1,5 +1,134 @@
 <div id="{{prefix}}Container">
 
-    Hello {{prefix}}
+    <!-- Team management bar -->
+    <div id="{{prefix}}-TeamBar">
+        <label>Team:&nbsp;</label>
+        <select id="{{prefix}}-team-select" onchange="{{plugin}}.onTeamSelect(this.value)">
+            <option value="">— All Teams —</option>
+        </select>
+        &nbsp;
+        <button onclick="{{plugin}}.createTeam()">New Team</button>
+        <button onclick="{{plugin}}.deleteSelectedTeam()">Delete Team</button>
+        &nbsp;&nbsp;
+        <span>Total: <span class="cnt" id="{{prefix}}-cntTotal"></span></span>
+    </div>
 
-</div>
+    <div id="{{prefix}}-Tabs">
+        <ul>
+            <li><a href="#{{prefix}}-Teams-Panel">Teams</a></li>
+            <li>
+                <a href="#{{prefix}}-Inventory-Panel">
+                    Equipment <span class="cnt" id="{{prefix}}-cntEquipment"></span>
+                </a>
+            </li>
+            <li><a href="#{{prefix}}-Keys-Panel">Keys <span class="cnt" id="{{prefix}}-cntKeys"></span></a></li>
+            <li><a href="#{{prefix}}-Other-Panel">Other <span class="cnt" id="{{prefix}}-cntOther"></span></a></li>
+            <li style="float: right"><a href="#{{prefix}}-Export-Panel">Export</a></li>
+        </ul>
+
+        <!-- Teams Panel -->
+        <div id="{{prefix}}-Teams-Panel">
+            <div style="margin-bottom: 12px">
+                <h3>Import Agent Data</h3>
+                <p>Select a team above, then import a JSON export file from KuKuInventory.</p>
+                <input type="file"
+                       id="{{prefix}}-import-input"
+                       accept=".json"
+                       style="display: none"
+                       onchange="{{plugin}}.importFromFile(this)">
+                <button onclick="document.getElementById('{{prefix}}-import-input').click()">
+                    Import JSON&hellip;
+                </button>
+            </div>
+            <hr>
+            <h3>Agents</h3>
+            <div id="{{prefix}}-AgentsList-Container">
+                <p>Select a team to see agents.</p>
+            </div>
+        </div>
+
+        <!-- Inventory Panel -->
+        <div id="{{prefix}}-Inventory-Panel">
+            <table class="inventoryTable">
+                <thead>
+                <tr>
+                    <th>Resonators <span class="cnt" id="{{prefix}}-cntResonators"></span></th>
+                    <th colspan="2">Weapons <span class="cnt" id="{{prefix}}-cntWeapons"></span></th>
+                    <th colspan="3">Mods <span class="cnt" id="{{prefix}}-cntMods"></span></th>
+                </tr>
+                <tr>
+                    <th></th>
+                    <th>Bursters <span class="cnt" id="{{prefix}}-cntBursters"></span></th>
+                    <th>
+                        Strikes <span class="cnt" id="{{prefix}}-cntStrikes"></span>
+                        &amp; Flips <span class="cnt" id="{{prefix}}-cntFlips"></span>
+                    </th>
+                    <th>Shields <span class="cnt" id="{{prefix}}-cntModShields"></span></th>
+                    <th>Hack <span class="cnt" id="{{prefix}}-cntModHack"></span></th>
+                    <th>Other <span class="cnt" id="{{prefix}}-cntModOther"></span></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td id="{{prefix}}-Resonators-Container" class="item-container">No data</td>
+                    <td id="{{prefix}}-Bursters-Container" class="item-container"></td>
+                    <td id="{{prefix}}-Strikes-Container" class="item-container"></td>
+                    <td id="{{prefix}}-Shields-Container" class="item-container"></td>
+                    <td id="{{prefix}}-HackMods-Container" class="item-container"></td>
+                    <td id="{{prefix}}-OtherMods-Container" class="item-container"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Keys Panel -->
+        <div id="{{prefix}}-Keys-Panel">
+            <table class="inventoryTable" id="{{prefix}}-keysTable">
+                <thead>
+                <tr>
+                    <th>Portal</th>
+                    <th>Distance</th>
+                    <th>Total <span class="cnt" id="{{prefix}}-cntKeysTotal"></span></th>
+                    <th>Per Agent</th>
+                </tr>
+                </thead>
+                <tbody id="{{prefix}}-Keys-Container">
+                    <tr><td colspan="4">No data</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Other Panel -->
+        <div id="{{prefix}}-Other-Panel">
+            <table class="inventoryTable">
+                <thead>
+                <tr>
+                    <th>Cubes <span class="cnt" id="{{prefix}}-cntCubes"></span></th>
+                    <th colspan="2">Boosts <span class="cnt" id="{{prefix}}-cntBoosts"></span></th>
+                </tr>
+                <tr>
+                    <th></th>
+                    <th>Play <span class="cnt" id="{{prefix}}-cntBoostsPlay"></span></th>
+                    <th>Beacons <span class="cnt" id="{{prefix}}-cntBoostsBeacons"></span></th>
+                </tr>
+                </thead>
+                <tbody>
+                <tr>
+                    <td id="{{prefix}}-Cubes-Container" class="item-container"></td>
+                    <td id="{{prefix}}-Boosts-Play-Container" class="item-container"></td>
+                    <td id="{{prefix}}-Boosts-Beacons-Container" class="item-container"></td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Export Panel -->
+        <div id="{{prefix}}-Export-Panel">
+            <h3>Export Team Data</h3>
+            <p>Exports all teams and their agent data to a JSON file.</p>
+            <button onclick="{{plugin}}.exportData()">Export to JSON</button>
+        </div>
+
+    </div><!-- /Tabs -->
+
+</div><!-- /Container -->

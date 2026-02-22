@@ -1,0 +1,125 @@
+/* Team bar */
+#KuKuTeamInventory-TeamBar {
+    padding: 6px 8px;
+    background: rgba(0, 0, 0, 0.3);
+    border-bottom: 1px solid #444;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+#KuKuTeamInventory-TeamBar select {
+    min-width: 200px;
+}
+
+/* Tables */
+table.inventoryTable th {
+    text-align: center;
+}
+
+table.inventoryTable td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+table.inventoryTable td.item-container {
+    text-align: center;
+    vertical-align: top;
+}
+
+table.inventoryTable td.label-container {
+    text-align: left;
+    vertical-align: top;
+}
+
+table.inventoryTable td.count-container {
+    text-align: right;
+    vertical-align: top;
+}
+
+/* Agents table */
+table.agents-table td {
+    text-align: left;
+    padding: 4px 8px;
+}
+
+table.agents-table th {
+    text-align: left;
+    padding: 4px 8px;
+}
+
+/* Count style */
+span.cnt, td.cnt {
+    color: lime;
+}
+
+/* Map layer markers */
+.layer-key-info {
+    font-size: 11px;
+    color: #ffff00;
+    font-family: monospace;
+    text-align: center;
+    text-shadow: 0 0 1px black, 0 0 1em black, 0 0 0.2em black;
+    pointer-events: none;
+    -webkit-text-size-adjust: none;
+    white-space: nowrap;
+}
+
+/* Item icons */
+.icon {
+    min-width: 64px;
+    height: 64px;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.img-RESONATOR-1 { background-image: url('/img/ico/Resonator_L1.png'); }
+.img-RESONATOR-2 { background-image: url('/img/ico/Resonator_L2.png'); }
+.img-RESONATOR-3 { background-image: url('/img/ico/Resonator_L3.png'); }
+.img-RESONATOR-4 { background-image: url('/img/ico/Resonator_L4.png'); }
+.img-RESONATOR-5 { background-image: url('/img/ico/Resonator_L5.png'); }
+.img-RESONATOR-6 { background-image: url('/img/ico/Resonator_L6.png'); }
+.img-RESONATOR-7 { background-image: url('/img/ico/Resonator_L7.png'); }
+.img-RESONATOR-8 { background-image: url('/img/ico/Resonator_L8.png'); }
+
+.img-EMP_BURSTER-1 { background-image: url('/img/ico/XMP_Burster_L1.png'); }
+.img-EMP_BURSTER-2 { background-image: url('/img/ico/XMP_Burster_L2.png'); }
+.img-EMP_BURSTER-3 { background-image: url('/img/ico/XMP_Burster_L3.png'); }
+.img-EMP_BURSTER-4 { background-image: url('/img/ico/XMP_Burster_L4.png'); }
+.img-EMP_BURSTER-5 { background-image: url('/img/ico/XMP_Burster_L5.png'); }
+.img-EMP_BURSTER-6 { background-image: url('/img/ico/XMP_Burster_L6.png'); }
+.img-EMP_BURSTER-7 { background-image: url('/img/ico/XMP_Burster_L7.png'); }
+.img-EMP_BURSTER-8 { background-image: url('/img/ico/XMP_Burster_L8.png'); }
+
+.img-ULTRA_STRIKE-1 { background-image: url('/img/ico/Ultra_Strike_L1.png'); }
+.img-ULTRA_STRIKE-2 { background-image: url('/img/ico/Ultra_Strike_L2.png'); }
+.img-ULTRA_STRIKE-3 { background-image: url('/img/ico/Ultra_Strike_L3.png'); }
+.img-ULTRA_STRIKE-4 { background-image: url('/img/ico/Ultra_Strike_L4.png'); }
+.img-ULTRA_STRIKE-5 { background-image: url('/img/ico/Ultra_Strike_L5.png'); }
+.img-ULTRA_STRIKE-6 { background-image: url('/img/ico/Ultra_Strike_L6.png'); }
+.img-ULTRA_STRIKE-7 { background-image: url('/img/ico/Ultra_Strike_L7.png'); }
+.img-ULTRA_STRIKE-8 { background-image: url('/img/ico/Ultra_Strike_L8.png'); }
+
+.img-JARVIS-0 { background-image: url('/img/ico/JARVIS_Virus.png'); }
+.img-ADA-0    { background-image: url('/img/ico/ADA_Refactor.png'); }
+
+.img-RES_SHIELD-COMMON      { background-image: url('/img2/ico/Portal_Shield_Common_Prime.png'); }
+.img-RES_SHIELD-RARE        { background-image: url('/img2/ico/Portal_Shield_Rare_Prime.png'); }
+.img-RES_SHIELD-VERY_RARE   { background-image: url('/img2/ico/Portal_Shield_Very_Rare_Prime.png'); }
+.img-EXTRA_SHIELD-VERY_RARE { background-image: url('/img2/ico/Aegis_Shield.png'); }
+
+.img-HEATSINK-COMMON    { background-image: url('/img2/ico/Heat_Sink-Common.png'); }
+.img-HEATSINK-RARE      { background-image: url('/img2/ico/Heat_Sink-Rare.png'); }
+.img-HEATSINK-VERY_RARE { background-image: url('/img2/ico/Heat_Sink-Very_Rare.png'); }
+
+.img-MULTIHACK-COMMON    { background-image: url('/img2/ico/Multi-Hack-Common.png'); }
+.img-MULTIHACK-RARE      { background-image: url('/img2/ico/Multi-Hack-Rare.png'); }
+.img-MULTIHACK-VERY_RARE { background-image: url('/img2/ico/Multi-Hack-Very_Rare.png'); }
+
+.img-FORCE_AMP-RARE               { background-image: url('/img2/ico/Force_Amp.png'); }
+.img-TURRET-RARE                  { background-image: url('/img2/ico/Turret.png'); }
+.img-LINK_AMPLIFIER-RARE          { background-image: url('/img2/ico/Link_Amp-Rare.png'); }
+.img-ULTRA_LINK_AMP-VERY_RARE     { background-image: url('/img2/ico/SoftBank_Ultra_Link.png'); }
+.img-TRANSMUTER_ATTACK-VERY_RARE  { background-image: url('/img/ico/ITO_EN_Transmuter_Negative.png'); }
+.img-TRANSMUTER_DEFENSE-VERY_RARE { background-image: url('/img/ico/ITO_EN_Transmuter_Positive.png'); }
