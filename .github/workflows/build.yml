@@ -1,0 +1,108 @@
+name: Build
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+on:
+  push:
+  workflow_dispatch:
+
+concurrency:
+  group: main-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js environment
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'yarn'
+
+      # -------------------------------
+      # Build latest commit (HEAD)
+      # -------------------------------
+
+      - name: Build HEAD
+        run: |
+          yarn install --immutable --frozen-lockfile
+          yarn build:dev
+          mkdir -p build/dev
+          cp -r dist/* build/dev/
+
+        # -------------------------------
+        # Detect latest tag (if any)
+        # -------------------------------
+
+      - name: Detect latest tag
+        id: tag_check
+        run: TAG=$(git tag --sort=-v:refname | head -n 1 || true)
+          
+          echo "tag=$TAG";
+          
+          if [ -z "$TAG" ]; then
+          echo "has_tag=false" >> "$GITHUB_OUTPUT";
+          else
+          echo "has_tag=true" >> "$GITHUB_OUTPUT";
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT";
+          fi
+
+      # -------------------------------
+      # Checkout latest tag
+      # -------------------------------
+      - name: Checkout latest tag
+        if: steps.tag_check.outputs.has_tag == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.tag_check.outputs.tag }}
+          path: tagged
+          fetch-depth: 0
+
+      # -------------------------------
+      # Build latest tag
+      # -------------------------------
+      - name: Build latest tag
+        if: steps.tag_check.outputs.has_tag == 'true'
+        working-directory: tagged
+        run: |
+          yarn install --immutable --frozen-lockfile
+          yarn build:prod
+          mkdir -p ../build/release
+          cp -r dist/* ../build/release/
+
+      # -------------------------------
+      # Create changelog
+      # -------------------------------
+      - name: Create changelog
+        run: node .github/scripts/create-changelog.js
+
+      # -------------------------------
+      # Build GitHub page
+      # -------------------------------
+      - name: Setup GitHub page
+        run: node .github/scripts/setup-github-page.js
+
+      - name: Upload build artifact to pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: gh_page
+
+  deploy:
+    # Do NOT run when this repository is the template itself
+    if: ${{ github.event.repository.is_template == false }}
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4

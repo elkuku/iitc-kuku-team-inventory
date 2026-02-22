@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{PROJECT_NAME}}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet"
+          integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
+    <link rel="stylesheet" href="assets/styles.css"/>
+</head>
+<body>
+
+<div class="container">
+
+    <h1>{{PROJECT_NAME}}</h1>
+
+    <p>
+        <em>{{PROJECT_DESCRIPTION}}</em>
+    </p>
+
+    <div class="release-container">
+        Latest Version: {{PROJECT_VERSION}}
+
+        <ul>
+            {{RELEASE_LINKS}}
+        </ul>
+    </div>
+
+    <h3>Beta Version</h3>
+
+    Last Updated: {{LAST_UPDATED}}
+
+    <ul>
+        {{DEV_LINKS}}
+    </ul>
+
+    <h3>Changelog</h3>
+
+    <table class="changelog-table">
+        <tbody>
+        {{CHANGELOG}}
+        </tbody>
+    </table>
+
+</div><!-- container -->
+
+</body>
+</html>

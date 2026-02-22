@@ -1,0 +1,21 @@
+{
+  "dependencies": {
+    "iitcpluginkit": "^1.9.6"
+  },
+  "license": "Unlicense",
+  "type": "module",
+  "scripts": {
+    "build": "yarn build:dev",
+    "build:dev": "yarn ipk build:dev",
+    "build:prod": "yarn ipk build:prod",
+    "start": "yarn ipk fileserver",
+    "autobuild": "yarn ipk autobuild"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.2",
+    "eslint": "^9.39.2",
+    "eslint-plugin-prefer-arrow-functions": "^3.9.1",
+    "eslint-plugin-unicorn": "^62.0.0",
+    "typescript-eslint": "^8.53.0"
+  }
+}

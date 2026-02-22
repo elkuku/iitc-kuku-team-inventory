@@ -1,0 +1,42 @@
+body {
+    background-color: rgb(39, 37, 28);
+    color: #e2c532;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    color: rgb(119, 107, 54);
+}
+
+a {
+    color: #00ffbb;
+}
+
+a:hover {
+    color: #ffffff;
+}
+
+div.release-container {
+    border: 1px solid lightgray;
+    padding: 10px;
+    margin-bottom: 10px;
+}
+
+table.changelog-table td {
+    padding: 5px;
+}
+
+table.changelog-table tr {
+    vertical-align: top;
+}
+
+td.changelog-version {
+    color: orange;
+}
+
+td.changelog-date {
+    color: wheat;
+}
+
+pre.changelog {
+    color: lime;
+}
