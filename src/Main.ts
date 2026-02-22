@@ -175,7 +175,7 @@ class Main implements Plugin.Class {
             const team = teams.find(t => t.id === this.selectedTeamId)
             return team?.agents ?? []
         }
-        return teams.flatMap(t => t.agents)
+        return teams.flatMap(t => t.agents.map(a => ({...a, name: `${t.name} / ${a.name}`})))
     }
 
     private refreshMapAndSidebar(): void {

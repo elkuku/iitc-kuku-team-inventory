@@ -10,7 +10,7 @@ import keysTableTemplate from '../tpl/_keys-table.hbs' with {type: 'text'}
 import agentsListTemplate from '../tpl/_agents-list.hbs' with {type: 'text'}
 
 import {translateKey} from '../../types/key-translations'
-import {AgentInventory, HelperHandlebars, KeyInfo, Team} from '../../types/Types'
+import {AgentInventory, HelperHandlebars, ItemWithBreakdown, KeyInfo, Team} from '../../types/Types'
 import {InventoryHelper} from './InventoryHelper'
 
 export class DialogHelper {
@@ -153,31 +153,31 @@ export class DialogHelper {
     // Private section processors
     // ------------------------------------------------------------------
 
-    private processResonators(resonators: Map<string, number>): number {
+    private processResonators(resonators: Map<string, ItemWithBreakdown>): number {
         const sorted = this.sortByNumericSuffix(resonators)
         this.getContainer('Resonators').innerHTML = this.itemsImageTpl({items: sorted})
 
         let total = 0
-        for (const count of resonators.values()) total += count
+        for (const item of resonators.values()) total += item.total
         this.setCount('cntResonators', total)
         return total
     }
 
-    private processWeapons(weapons: Map<string, number>): number {
-        const bursters = new Map<string, number>()
-        const strikes = new Map<string, number>()
+    private processWeapons(weapons: Map<string, ItemWithBreakdown>): number {
+        const bursters = new Map<string, ItemWithBreakdown>()
+        const strikes = new Map<string, ItemWithBreakdown>()
         let cntBursters = 0, cntStrikes = 0, cntFlips = 0
 
         for (const [key, value] of weapons) {
             if (key.startsWith('EMP_BURSTER')) {
                 bursters.set(key, value)
-                cntBursters += value
+                cntBursters += value.total
             } else if (key.startsWith('ULTRA_STRIKE')) {
                 strikes.set(key, value)
-                cntStrikes += value
+                cntStrikes += value.total
             } else if (key === 'ADA-0' || key === 'JARVIS-0') {
                 strikes.set(key, value)
-                cntFlips += value
+                cntFlips += value.total
             } else {
                 console.warn('[KuKuTeamInventory] Unknown weapon:', key)
             }
@@ -195,10 +195,10 @@ export class DialogHelper {
         return total
     }
 
-    private processMods(mods: Map<string, number>): number {
-        const shields = new Map<string, number>()
-        const hackMods = new Map<string, number>()
-        const otherMods = new Map<string, number>()
+    private processMods(mods: Map<string, ItemWithBreakdown>): number {
+        const shields = new Map<string, ItemWithBreakdown>()
+        const hackMods = new Map<string, ItemWithBreakdown>()
+        const otherMods = new Map<string, ItemWithBreakdown>()
         let cntShields = 0, cntHack = 0, cntOther = 0
 
         const rarities = ['COMMON', 'RARE', 'VERY_RARE']
@@ -206,13 +206,13 @@ export class DialogHelper {
         for (const [key, value] of mods) {
             if (key.startsWith('RES_SHIELD') || key.startsWith('EXTRA_SHIELD')) {
                 shields.set(key, value)
-                cntShields += value
+                cntShields += value.total
             } else if (key.startsWith('HEATSINK') || key.startsWith('MULTIHACK')) {
                 hackMods.set(key, value)
-                cntHack += value
+                cntHack += value.total
             } else {
                 otherMods.set(key, value)
-                cntOther += value
+                cntOther += value.total
             }
         }
 
@@ -233,29 +233,29 @@ export class DialogHelper {
         return total
     }
 
-    private processCubes(cubes: Map<string, number>): number {
+    private processCubes(cubes: Map<string, ItemWithBreakdown>): number {
         const sorted = this.sortByNumericSuffix(cubes)
         this.getContainer('Cubes').innerHTML = this.itemsLabelTpl({items: sorted})
 
         let total = 0
-        for (const count of cubes.values()) total += count
+        for (const item of cubes.values()) total += item.total
         this.setCount('cntCubes', total)
         return total
     }
 
-    private processBoosts(boosts: Map<string, number>): number {
-        const play = new Map<string, number>()
-        const beacons = new Map<string, number>()
+    private processBoosts(boosts: Map<string, ItemWithBreakdown>): number {
+        const play = new Map<string, ItemWithBreakdown>()
+        const beacons = new Map<string, ItemWithBreakdown>()
         const playTypes = new Set(['FRACK', 'APEX', 'BB_BATTLE', 'FW_ENL', 'FW_RES'])
         let cntPlay = 0, cntBeacons = 0
 
         for (const [key, value] of boosts) {
             if (playTypes.has(key)) {
                 play.set(key, value)
-                cntPlay += value
+                cntPlay += value.total
             } else {
                 beacons.set(key, value)
-                cntBeacons += value
+                cntBeacons += value.total
             }
         }
 
@@ -297,7 +297,7 @@ export class DialogHelper {
         if (element) element.textContent = count.toString()
     }
 
-    private sortByNumericSuffix(map: Map<string, number>): Map<string, number> {
+    private sortByNumericSuffix<V>(map: Map<string, V>): Map<string, V> {
         return new Map(
             [...map.entries()].toSorted(([a], [b]) => {
                 const numA = parseInt(/(\d+)$/.exec(a)?.[1] ?? '0', 10)
@@ -307,11 +307,11 @@ export class DialogHelper {
         )
     }
 
-    private sortByCompoundKey(
-        map: Map<string, number>,
+    private sortByCompoundKey<V>(
+        map: Map<string, V>,
         typeOrder: string[],
         rarityOrder: string[]
-    ): Map<string, number> {
+    ): Map<string, V> {
         return new Map(
             [...map.entries()].toSorted(([a], [b]) => {
                 const lastA = a.lastIndexOf('-')

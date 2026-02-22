@@ -54,6 +54,23 @@ span.cnt, td.cnt {
     color: lime;
 }
 
+/* Per-agent breakdown rows */
+td.item-breakdown {
+    font-size: 0.8em;
+    color: #999;
+    padding-top: 0;
+    padding-bottom: 6px;
+}
+
+.breakdown-agent {
+    margin-right: 10px;
+    white-space: nowrap;
+}
+
+.breakdown-count {
+    color: #aaa;
+}
+
 /* Map layer markers */
 .layer-key-info {
     font-size: 11px;

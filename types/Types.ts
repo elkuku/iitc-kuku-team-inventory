@@ -40,6 +40,11 @@ export interface KeyInfo {
     agentCounts: Map<string, number>
 }
 
+export interface ItemWithBreakdown {
+    total: number
+    agents: Map<string, number>
+}
+
 export interface AgentExportData {
     agent?: string
     keys?: KeyExport[]

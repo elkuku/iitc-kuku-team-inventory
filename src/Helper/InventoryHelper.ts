@@ -1,4 +1,4 @@
-import {AgentInventory, KeyInfo} from '../../types/Types'
+import {AgentInventory, ItemWithBreakdown, KeyInfo} from '../../types/Types'
 
 type InventoryField = 'resonators' | 'weapons' | 'mods' | 'cubes' | 'boosts'
 
@@ -29,12 +29,18 @@ export class InventoryHelper {
         return result
     }
 
-    public aggregateItems(agents: AgentInventory[], field: InventoryField): Map<string, number> {
-        const result = new Map<string, number>()
+    public aggregateItems(agents: AgentInventory[], field: InventoryField): Map<string, ItemWithBreakdown> {
+        const result = new Map<string, ItemWithBreakdown>()
 
         for (const agent of agents) {
             for (const [key, count] of Object.entries(agent[field])) {
-                result.set(key, (result.get(key) ?? 0) + count)
+                const existing = result.get(key)
+                if (existing) {
+                    existing.total += count
+                    existing.agents.set(agent.name, (existing.agents.get(agent.name) ?? 0) + count)
+                } else {
+                    result.set(key, {total: count, agents: new Map([[agent.name, count]])})
+                }
             }
         }
 

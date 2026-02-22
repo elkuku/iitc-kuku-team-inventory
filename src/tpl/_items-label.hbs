@@ -1,9 +1,16 @@
 <table>
     {{#eachInMap items}}
-        {{#if value}}
+        {{#if value.total}}
             <tr>
                 <td title="{{key}}" class="label-container">{{translateKey key}}</td>
-                <td class="cnt count-container">{{value}}</td>
+                <td class="cnt count-container">{{value.total}}</td>
+            </tr>
+            <tr>
+                <td colspan="2" class="item-breakdown">
+                    {{#eachInMap value.agents}}
+                        <span class="breakdown-agent">{{key}}: <span class="breakdown-count">{{value}}</span></span>
+                    {{/eachInMap}}
+                </td>
             </tr>
         {{/if}}
     {{/eachInMap}}

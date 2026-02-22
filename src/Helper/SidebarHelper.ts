@@ -19,7 +19,7 @@ export class SidebarHelper {
         if (!tbody) return
 
         let html = '<tr>'
-        html += `<td>Team Keys: <strong>${keyInfo.total}</strong></td>`
+        html += `<td>Team: <strong>${keyInfo.total}</strong></td>`
         html += '<td colspan="3">'
 
         if (keyInfo.agentCounts.size > 0) {
