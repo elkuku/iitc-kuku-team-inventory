@@ -55,9 +55,16 @@ export class LayerHelper {
     }
 
     private refreshMarkers(): void {
-        for (const [guid, marker] of this.markers) {
+        for (const marker of this.markers.values()) {
             this.layerGroup.removeLayer(marker)
-            this.markers.delete(guid)
+        }
+        this.markers.clear()
+
+        for (const guid of Object.keys(window.portals)) {
+            if (!this.keys.has(guid)) continue
+            const marker = this.createMarker(guid)
+            this.layerGroup.addLayer(marker)
+            this.markers.set(guid, marker)
         }
     }
 
