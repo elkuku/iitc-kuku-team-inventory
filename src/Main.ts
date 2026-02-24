@@ -209,7 +209,7 @@ class Main implements Plugin.Class {
 
     private createButtons(): void {
         IITC.toolbox.addButton({
-            label: 'Team Inventory',
+            label: 'KTeamInventory',
             title: 'Show team inventory',
             id: `btn-${PLUGIN_NAME}`,
             action: this.showDialog,
