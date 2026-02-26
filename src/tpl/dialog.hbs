@@ -136,6 +136,15 @@
             <h3>Export Team Data</h3>
             <p>Exports all teams and their agent data to a JSON file.</p>
             <button onclick="{{plugin}}.exportData()">Export to JSON</button>
+            <hr>
+            <h3>Import Team Data</h3>
+            <p>Imports a previously exported teams JSON file. You can replace all existing data or merge by team ID.</p>
+            <input type="file"
+                   id="{{prefix}}-teams-import-input"
+                   accept=".json"
+                   style="display: none"
+                   onchange="{{plugin}}.importTeamsData(this)">
+            <button onclick="document.getElementById('{{prefix}}-teams-import-input').click()">Import Teams JSON&hellip;</button>
         </div>
 
     </div><!-- /Tabs -->

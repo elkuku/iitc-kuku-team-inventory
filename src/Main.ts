@@ -10,7 +10,7 @@ import {InventoryHelper} from './Helper/InventoryHelper'
 import {LayerHelper} from './Helper/LayerHelper'
 import {SidebarHelper} from './Helper/SidebarHelper'
 import {StorageHelper} from './Helper/StorageHelper'
-import {AgentInventory} from '../types/Types'
+import {AgentInventory, Team} from '../types/Types'
 import Portal = IITC.Portal
 
 // eslint-disable-next-line @typescript-eslint/no-unsafe-call
@@ -163,6 +163,60 @@ class Main implements Plugin.Class {
 
     public exportData = (): void => {
         this.exportHelper.exportTeams(this.storageHelper.loadTeams())
+    }
+
+    public importTeamsData = async (input: HTMLInputElement): Promise<void> => {
+        const file = input.files?.[0]
+        input.value = ''
+        if (!file) return
+
+        let imported: Team[]
+        try {
+            imported = await this.importHelper.readTeamsFile(file)
+        } catch {
+            alert('Failed to read file. Make sure it is a valid team export JSON.')
+            return
+        }
+
+        if (imported.length === 0) {
+            alert('No teams found in the file.')
+            return
+        }
+
+        const teamCount = imported.length
+        const agentCount = imported.reduce((sum, t) => sum + t.agents.length, 0)
+        const existing = this.storageHelper.loadTeams()
+
+        let merged: Team[]
+
+        if (existing.length === 0) {
+            merged = imported
+        } else {
+            const replace = confirm(
+                `Import ${teamCount} team(s) with ${agentCount} agent(s).\n\n` +
+                'OK = Replace all existing data\nCancel = Merge (add new teams, update existing by ID)'
+            )
+            if (replace) {
+                merged = imported
+            } else {
+                merged = [...existing]
+                for (const team of imported) {
+                    const index = merged.findIndex(t => t.id === team.id)
+                    if (index === -1) {
+                        merged.push(team)
+                    } else {
+                        merged[index] = team
+                    }
+                }
+            }
+        }
+
+        this.storageHelper.saveTeams(merged)
+        this.selectedTeamId = merged[0]?.id
+
+        const teams = this.storageHelper.loadTeams()
+        this.refreshMapAndSidebar()
+        this.dialogHelper.updateAll(teams, this.selectedTeamId, this.getAgentsForDisplay())
     }
 
     // ------------------------------------------------------------------
