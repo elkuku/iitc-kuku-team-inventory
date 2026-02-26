@@ -22,11 +22,12 @@ IITC plugin for tracking team inventory. Built with iitcpluginkit (TypeScript + 
 src/
   Main.ts                     - Plugin entry, public API for HTML onclick handlers
   Helper/
-    Dialog.ts                 - Main dialog (tabs: Teams, Equipment, Keys, Other, Export)
+    Dialog.ts                 - Main dialog (tabs: Teams, Equipment, Keys, Other, Export, Sheets)
     StorageHelper.ts          - localStorage R/W for Team[] data
     ImportHelper.ts           - File import (uses Blob#text())
     InventoryHelper.ts        - Aggregates data across agents
     LayerHelper.ts            - Map markers showing key counts
+    SheetsHelper.ts           - Google Sheets push/pull via GIS OAuth2 token flow
     SidebarHelper.ts          - Portal detail sidebar panel
     ExportHelper.ts           - JSON export of all teams
   tpl/
@@ -37,11 +38,19 @@ src/
     _agents-list.hbs          - Agent list table in Teams tab
   styles.css                  - CSS (icon classes reference /img/ico/ server paths)
 types/
-  Types.ts                    - All interfaces: Team, AgentInventory, KeyInfo, etc.
+  Types.ts                    - All interfaces: Team, AgentInventory, KeyInfo, SheetsConfig, etc.
   key-translations.ts         - Human-readable names for item keys
   handlebars.d.ts             - Handlebars type defs (vendored)
+  gis.d.ts                    - google.accounts.oauth2 type defs (vendored ambient)
 webpack.config.cjs            - Disables CSS URL resolution in webpack
 ```
+
+## Google Sheets Integration
+- localStorage keys: `plugin-kuku-team-inventory-sheets-client-id`, `plugin-kuku-team-inventory-sheets-spreadsheet-id`
+- Access token: memory only (never persisted)
+- Sheet layout: tab `KuKuTeamInventory`, A1=ISO timestamp, A2=JSON.stringify(teams), majorDimension COLUMNS
+- GIS script loaded lazily on first use from `https://accounts.google.com/gsi/client`
+- `SheetsHelper` uses callback-based API; Main.ts adds `saveSheetsConfig`, `pushToSheets`, `pullFromSheets` arrow properties
 
 ## Reference Plugin
 `/home/elkuku/repos/IITC/KuKu/iitc-kuku-inventory` - single-agent inventory plugin

@@ -55,6 +55,11 @@ export interface AgentExportData {
     boosts?: Record<string, number>
 }
 
+export interface SheetsConfig {
+    clientId: string
+    spreadsheetId: string
+}
+
 declare global {
     interface Window {
         plugin: {

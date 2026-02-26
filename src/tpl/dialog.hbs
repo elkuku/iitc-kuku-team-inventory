@@ -23,6 +23,7 @@
             </li>
             <li><a href="#{{prefix}}-Keys-Panel">Keys <span class="cnt" id="{{prefix}}-cntKeys"></span></a></li>
             <li><a href="#{{prefix}}-Other-Panel">Other <span class="cnt" id="{{prefix}}-cntOther"></span></a></li>
+            <li style="float: right"><a href="#{{prefix}}-Sheets-Panel">Sheets</a></li>
             <li style="float: right"><a href="#{{prefix}}-Export-Panel">Export</a></li>
         </ul>
 
@@ -145,6 +146,55 @@
                    style="display: none"
                    onchange="{{plugin}}.importTeamsData(this)">
             <button onclick="document.getElementById('{{prefix}}-teams-import-input').click()">Import Teams JSON&hellip;</button>
+        </div>
+
+        <!-- Sheets Panel -->
+        <div id="{{prefix}}-Sheets-Panel">
+            <h3>Google Sheets Sync</h3>
+            <p>
+                Share team inventory across browsers and devices via a Google Spreadsheet.
+                No server required — data is stored directly in your sheet.
+            </p>
+            <fieldset>
+                <legend>Setup</legend>
+                <ol>
+                    <li>Google Cloud Console → create project → enable <strong>Google Sheets API</strong></li>
+                    <li>Create an <strong>OAuth 2.0 Client ID</strong> (Web Application type)</li>
+                    <li>Add <code>https://intel.ingress.com</code> as an authorized JavaScript origin</li>
+                    <li>Create a Google Sheet and copy its ID from the URL</li>
+                </ol>
+                <table>
+                    <tr>
+                        <td><label for="{{prefix}}-sheets-client-id">Client ID:</label></td>
+                        <td>
+                            <input type="text"
+                                   id="{{prefix}}-sheets-client-id"
+                                   placeholder="xxxxxxxxxx.apps.googleusercontent.com"
+                                   style="width: 420px">
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><label for="{{prefix}}-sheets-spreadsheet-id">Spreadsheet ID:</label></td>
+                        <td>
+                            <input type="text"
+                                   id="{{prefix}}-sheets-spreadsheet-id"
+                                   placeholder="Spreadsheet ID from URL"
+                                   style="width: 420px">
+                        </td>
+                    </tr>
+                </table>
+                <br>
+                <button onclick="{{plugin}}.saveSheetsConfig()">Save Credentials</button>
+            </fieldset>
+            <br>
+            <button onclick="{{plugin}}.pushToSheets()" title="Push team data to Google Sheets">
+                &uarr; Push to Sheets
+            </button>
+            &nbsp;
+            <button onclick="{{plugin}}.pullFromSheets()" title="Pull team data from Google Sheets">
+                &darr; Pull from Sheets
+            </button>
+            <div id="{{prefix}}-sheets-status" style="margin-top: 8px; font-style: italic;"></div>
         </div>
 
     </div><!-- /Tabs -->

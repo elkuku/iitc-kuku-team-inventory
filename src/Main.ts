@@ -8,6 +8,7 @@ import {ExportHelper} from './Helper/ExportHelper'
 import {ImportHelper} from './Helper/ImportHelper'
 import {InventoryHelper} from './Helper/InventoryHelper'
 import {LayerHelper} from './Helper/LayerHelper'
+import {SheetsHelper} from './Helper/SheetsHelper'
 import {SidebarHelper} from './Helper/SidebarHelper'
 import {StorageHelper} from './Helper/StorageHelper'
 import {AgentInventory, Team} from '../types/Types'
@@ -22,6 +23,7 @@ class Main implements Plugin.Class {
     private importHelper!: ImportHelper
     private inventoryHelper!: InventoryHelper
     private layerHelper!: LayerHelper
+    private sheetsHelper!: SheetsHelper
     private sidebarHelper!: SidebarHelper
     private storageHelper!: StorageHelper
     private exportHelper!: ExportHelper
@@ -40,6 +42,7 @@ class Main implements Plugin.Class {
         this.layerHelper = new LayerHelper('Team Keys')
         this.sidebarHelper = new SidebarHelper()
         this.exportHelper = new ExportHelper()
+        this.sheetsHelper = new SheetsHelper()
         this.dialogHelper = new DialogHelper(PLUGIN_NAME, 'Team Inventory', this.inventoryHelper)
 
         this.refreshMapAndSidebar()
@@ -219,6 +222,69 @@ class Main implements Plugin.Class {
         this.dialogHelper.updateAll(teams, this.selectedTeamId, this.getAgentsForDisplay())
     }
 
+    public saveSheetsConfig = (): void => {
+        const clientIdElement = document.getElementById(`${PLUGIN_NAME}-sheets-client-id`) as HTMLInputElement | undefined
+        const spreadsheetIdElement = document.getElementById(`${PLUGIN_NAME}-sheets-spreadsheet-id`) as HTMLInputElement | undefined
+        const clientId = (clientIdElement?.value ?? '').trim()
+        const spreadsheetId = (spreadsheetIdElement?.value ?? '').trim()
+        if (!clientId || !spreadsheetId) {
+            alert('Both Client ID and Spreadsheet ID are required.')
+            return
+        }
+        this.sheetsHelper.saveConfig({clientId, spreadsheetId})
+        const statusElement = document.getElementById(`${PLUGIN_NAME}-sheets-status`) as HTMLElement | undefined
+        if (statusElement) statusElement.textContent = 'Credentials saved.'
+    }
+
+    public pushToSheets = (): void => {
+        const teams = this.storageHelper.loadTeams()
+        this.sheetsHelper.pushToSheets(teams, `${PLUGIN_NAME}-sheets-status`)
+    }
+
+    public pullFromSheets = (): void => {
+        this.sheetsHelper.pullFromSheets(`${PLUGIN_NAME}-sheets-status`, (imported: Team[]) => {
+            if (imported.length === 0) {
+                alert('No teams found in the sheet.')
+                return
+            }
+
+            const teamCount = imported.length
+            const agentCount = imported.reduce((sum, t) => sum + t.agents.length, 0)
+            const existing = this.storageHelper.loadTeams()
+
+            let merged: Team[]
+
+            if (existing.length === 0) {
+                merged = imported
+            } else {
+                const replace = confirm(
+                    `Import ${teamCount} team(s) with ${agentCount} agent(s).\n\n` +
+                    'OK = Replace all existing data\nCancel = Merge (add new teams, update existing by ID)'
+                )
+                if (replace) {
+                    merged = imported
+                } else {
+                    merged = [...existing]
+                    for (const team of imported) {
+                        const position = merged.findIndex(t => t.id === team.id)
+                        if (position === -1) {
+                            merged.push(team)
+                        } else {
+                            merged[position] = team
+                        }
+                    }
+                }
+            }
+
+            this.storageHelper.saveTeams(merged)
+            this.selectedTeamId = merged[0]?.id
+
+            const teams = this.storageHelper.loadTeams()
+            this.refreshMapAndSidebar()
+            this.dialogHelper.updateAll(teams, this.selectedTeamId, this.getAgentsForDisplay())
+        })
+    }
+
     // ------------------------------------------------------------------
     // Private helpers
     // ------------------------------------------------------------------
@@ -280,6 +346,14 @@ class Main implements Plugin.Class {
         this.dialogHelper.updateAll(teams, this.selectedTeamId, this.getAgentsForDisplay())
 
         $(`#${PLUGIN_NAME}-Tabs`).tabs()
+
+        const config = this.sheetsHelper.loadConfig()
+        if (config) {
+            const clientIdElement = document.getElementById(`${PLUGIN_NAME}-sheets-client-id`) as HTMLInputElement | undefined
+            const spreadsheetIdElement = document.getElementById(`${PLUGIN_NAME}-sheets-spreadsheet-id`) as HTMLInputElement | undefined
+            if (clientIdElement) clientIdElement.value = config.clientId
+            if (spreadsheetIdElement) spreadsheetIdElement.value = config.spreadsheetId
+        }
     }
 }
 
