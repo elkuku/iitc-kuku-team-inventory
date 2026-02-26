@@ -279,6 +279,10 @@ export class DialogHelper {
         let total = 0
         for (const info of keys.values()) total += info.total
         this.setCount('cntKeysTotal', total)
+
+        this.enableTableSorting(`${this.pluginName}-keysTable`)
+        this.enableKeysSearch(`${this.pluginName}-keysTable`, `${this.pluginName}-keys-search`)
+
         return total
     }
 
@@ -295,6 +299,90 @@ export class DialogHelper {
     private setCount(name: string, count: number): void {
         const element = document.getElementById(`${this.pluginName}-${name}`)
         if (element) element.textContent = count.toString()
+    }
+
+    public sortTable(tableId: string, columnIndex: number, type: 'string' | 'number' | 'distance', ascending: boolean): void {
+        const table = document.getElementById(tableId) as HTMLTableElement
+        const tbody = table.tBodies[0]
+        const rows = [...tbody.rows]
+
+        rows.sort((a, b) => {
+            const aText = a.cells[columnIndex].textContent?.trim() ?? ''
+            const bText = b.cells[columnIndex].textContent?.trim() ?? ''
+
+            switch (type) {
+                case 'string':
+                    return ascending ? aText.localeCompare(bText) : bText.localeCompare(aText)
+                case 'number': {
+                    const aNum = parseFloat(aText)
+                    const bNum = parseFloat(bText)
+                    return ascending ? aNum - bNum : bNum - aNum
+                }
+                case 'distance': {
+                    const aNum = DialogHelper.parseDistance(aText)
+                    const bNum = DialogHelper.parseDistance(bText)
+                    return ascending ? aNum - bNum : bNum - aNum
+                }
+            }
+        })
+
+        rows.forEach(row => tbody.appendChild(row))
+    }
+
+    public enableTableSorting(tableId: string): void {
+        const table = document.getElementById(tableId) as HTMLTableElement
+        if (!table || table.dataset.sortEnabled) return
+        table.dataset.sortEnabled = 'true'
+
+        const headers = table.querySelectorAll<HTMLTableCellElement>('th')
+
+        headers.forEach((header, i) => {
+            const type = header.dataset.type as 'string' | 'number' | 'distance' | undefined
+            if (!type) return
+
+            const indicator = document.createElement('span')
+            indicator.style.marginLeft = '8px'
+            header.appendChild(indicator)
+
+            let ascending = true
+
+            header.addEventListener('click', () => {
+                this.sortTable(tableId, i, type, ascending)
+                ascending = !ascending
+
+                headers.forEach(hdr => {
+                    const span = hdr.querySelector('span:not(.cnt)')
+                    if (span) span.textContent = ''
+                })
+
+                indicator.textContent = ascending ? '▲' : '▼'
+            })
+        })
+    }
+
+    public enableKeysSearch(tableId: string, inputId: string): void {
+        const input = document.getElementById(inputId) as HTMLInputElement | null
+        if (!input || input.dataset.searchEnabled) return
+        input.dataset.searchEnabled = 'true'
+
+        input.addEventListener('input', () => {
+            const query = input.value.toLowerCase().trim()
+            const table = document.getElementById(tableId) as HTMLTableElement | null
+            if (!table) return
+
+            for (const row of table.tBodies[0].rows) {
+                const text = row.cells[0]?.textContent?.toLowerCase() ?? ''
+                row.style.display = !query || text.includes(query) ? '' : 'none'
+            }
+        })
+    }
+
+    private static parseDistance(distanceStr: string): number {
+        const match = /^([\d.]+)\s*(\w+)$/.exec(distanceStr.trim())
+        if (!match) return 0
+        const value = parseFloat(match[1])
+        const unit = match[2].toLowerCase()
+        return unit === 'km' ? value * 1000 : value
     }
 
     private sortByNumericSuffix<V>(map: Map<string, V>): Map<string, V> {

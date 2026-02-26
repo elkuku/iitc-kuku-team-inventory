@@ -13,6 +13,25 @@
     min-width: 200px;
 }
 
+/* Keys search bar */
+.keys-search-bar {
+    padding: 6px 0;
+}
+
+.keys-search-bar input {
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Sortable column headers */
+table.inventoryTable th[data-type] {
+    cursor: pointer;
+}
+
+table.inventoryTable th[data-type]:hover {
+    text-decoration: underline;
+}
+
 /* Tables */
 table.inventoryTable th {
     text-align: center;

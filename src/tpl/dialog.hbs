@@ -83,12 +83,19 @@
 
         <!-- Keys Panel -->
         <div id="{{prefix}}-Keys-Panel">
+            <div class="keys-search-bar">
+                <input type="text"
+                       id="{{prefix}}-keys-search"
+                       aria-label="Search portal"
+                       placeholder="Search portal…"
+                       autocomplete="off">
+            </div>
             <table class="inventoryTable" id="{{prefix}}-keysTable">
                 <thead>
                 <tr>
-                    <th>Portal</th>
-                    <th>Distance</th>
-                    <th>Total <span class="cnt" id="{{prefix}}-cntKeysTotal"></span></th>
+                    <th data-type="string">Portal</th>
+                    <th data-type="distance">Distance</th>
+                    <th data-type="number">Total <span class="cnt" id="{{prefix}}-cntKeysTotal"></span></th>
                     <th>Per Agent</th>
                 </tr>
                 </thead>
