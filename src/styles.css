@@ -23,6 +23,19 @@
     box-sizing: border-box;
 }
 
+/* Keys table scroll container */
+.keys-table-scroll {
+    overflow-y: auto;
+    max-height: 490px;
+}
+
+.keys-table-scroll thead th {
+    position: sticky;
+    top: 0;
+    background: #1b1b1b;
+    z-index: 1;
+}
+
 /* Sortable column headers */
 table.inventoryTable th[data-type] {
     cursor: pointer;
