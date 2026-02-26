@@ -1,10 +1,8 @@
-# IITC Plugin Template
+# KuKuTeamInventory
 
-CHANGEME
+Display team inventory information
 
-`todo`: Add your content
-
-https://elkuku.github.io/iitc-kuku-team-inventory/
+More information: https://elkuku.github.io/iitc-kuku-team-inventory/
 
 ----
 Made with :heart: and the [IITC Plugin Kit](https://github.com/McBen/IITCPluginKit)
