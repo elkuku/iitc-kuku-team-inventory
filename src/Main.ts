@@ -344,10 +344,8 @@ class Main implements Plugin.Class {
     }
 
     private updateMapDisplayButtons(mode: 'count' | 'icon'): void {
-        document.getElementById(`${PLUGIN_NAME}-map-display-count`)
-            ?.classList.toggle('map-display-active', mode === 'count')
-        document.getElementById(`${PLUGIN_NAME}-map-display-icon`)
-            ?.classList.toggle('map-display-active', mode === 'icon')
+        const select = document.getElementById(`${PLUGIN_NAME}-map-display-mode`) as HTMLSelectElement | null
+        if (select) select.value = mode
     }
 
     private showDialog = (): void => {

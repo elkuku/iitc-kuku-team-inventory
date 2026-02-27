@@ -1,7 +1,11 @@
 import {AgentInventory, Team} from '../../types/Types'
 
 const STORAGE_KEY = 'plugin-kuku-team-inventory-teams'
-const MAP_DISPLAY_KEY = 'plugin-kuku-team-inventory-map-display'
+const SETTINGS_KEY = 'plugin-kuku-team-inventory-settings'
+
+interface Settings {
+    mapDisplayMode: 'count' | 'icon'
+}
 
 export class StorageHelper {
 
@@ -66,11 +70,25 @@ export class StorageHelper {
         this.saveTeams(teams)
     }
 
+    public loadSettings(): Settings {
+        const raw = localStorage.getItem(SETTINGS_KEY)
+        if (!raw) return {mapDisplayMode: 'count'}
+        try {
+            return {...{mapDisplayMode: 'count'}, ...JSON.parse(raw) as Partial<Settings>}
+        } catch {
+            return {mapDisplayMode: 'count'}
+        }
+    }
+
+    public saveSettings(settings: Settings): void {
+        localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings))
+    }
+
     public loadMapDisplayMode(): 'count' | 'icon' {
-        return (localStorage.getItem(MAP_DISPLAY_KEY) as 'count' | 'icon') ?? 'count'
+        return this.loadSettings().mapDisplayMode
     }
 
     public saveMapDisplayMode(mode: 'count' | 'icon'): void {
-        localStorage.setItem(MAP_DISPLAY_KEY, mode)
+        this.saveSettings({...this.loadSettings(), mapDisplayMode: mode})
     }
 }

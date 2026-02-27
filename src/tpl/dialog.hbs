@@ -11,12 +11,6 @@
         <button onclick="{{plugin}}.deleteSelectedTeam()">Delete Team</button>
         &nbsp;&nbsp;
         <span>Total: <span class="cnt" id="{{prefix}}-cntTotal"></span></span>
-        &nbsp;&nbsp;
-        <span>
-            Map:&nbsp;
-            <button id="{{prefix}}-map-display-count" onclick="{{plugin}}.setMapDisplay('count')">Count</button>
-            <button id="{{prefix}}-map-display-icon"  onclick="{{plugin}}.setMapDisplay('icon')">Icon</button>
-        </span>
     </div>
 
     <div id="{{prefix}}-Tabs">
@@ -29,6 +23,7 @@
             </li>
             <li><a href="#{{prefix}}-Keys-Panel">Keys <span class="cnt" id="{{prefix}}-cntKeys"></span></a></li>
             <li><a href="#{{prefix}}-Other-Panel">Other <span class="cnt" id="{{prefix}}-cntOther"></span></a></li>
+            <li style="float: right"><a href="#{{prefix}}-Settings-Panel">Settings</a></li>
             <li style="float: right"><a href="#{{prefix}}-Sheets-Panel">Sheets</a></li>
             <li style="float: right"><a href="#{{prefix}}-Export-Panel">Export</a></li>
         </ul>
@@ -152,6 +147,18 @@
                    style="display: none"
                    onchange="{{plugin}}.importTeamsData(this)">
             <button onclick="document.getElementById('{{prefix}}-teams-import-input').click()">Import Teams JSON&hellip;</button>
+        </div>
+
+        <!-- Settings Panel -->
+        <div id="{{prefix}}-Settings-Panel">
+            <h3>Map Display</h3>
+            <p>
+                <label for="{{prefix}}-map-display-mode">Mode:&nbsp;</label>
+                <select id="{{prefix}}-map-display-mode" onchange="{{plugin}}.setMapDisplay(this.value)">
+                    <option value="count">Count</option>
+                    <option value="icon">Icon</option>
+                </select>
+            </p>
         </div>
 
         <!-- Sheets Panel -->

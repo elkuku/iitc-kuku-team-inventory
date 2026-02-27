@@ -115,14 +115,6 @@ td.item-breakdown {
     white-space: nowrap;
 }
 
-/* Active state for the Count / Icon toggle buttons in the team bar */
-button.map-display-active {
-    background: rgba(255, 200, 0, 0.15);
-    color: #ffcc00;
-    border-color: rgba(255, 200, 0, 0.6);
-    font-weight: bold;
-}
-
 /* Outer Leaflet DivIcon — zero-size anchor placed exactly at the portal pixel.
    All visual styling lives on the inner .team-key-bubble child. */
 .layer-team-key-info {
