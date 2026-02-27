@@ -40,6 +40,7 @@ class Main implements Plugin.Class {
         this.importHelper = new ImportHelper()
         this.inventoryHelper = new InventoryHelper()
         this.layerHelper = new LayerHelper('Team Keys')
+        this.layerHelper.setDisplayMode(this.storageHelper.loadMapDisplayMode())
         this.sidebarHelper = new SidebarHelper()
         this.exportHelper = new ExportHelper()
         this.sheetsHelper = new SheetsHelper()
@@ -336,6 +337,19 @@ class Main implements Plugin.Class {
         })
     }
 
+    public setMapDisplay = (mode: 'count' | 'icon'): void => {
+        this.storageHelper.saveMapDisplayMode(mode)
+        this.layerHelper.setDisplayMode(mode)
+        this.updateMapDisplayButtons(mode)
+    }
+
+    private updateMapDisplayButtons(mode: 'count' | 'icon'): void {
+        document.getElementById(`${PLUGIN_NAME}-map-display-count`)
+            ?.classList.toggle('map-display-active', mode === 'count')
+        document.getElementById(`${PLUGIN_NAME}-map-display-icon`)
+            ?.classList.toggle('map-display-active', mode === 'icon')
+    }
+
     private showDialog = (): void => {
         if (this.dialog) return
 
@@ -344,6 +358,7 @@ class Main implements Plugin.Class {
         this.dialog.on('dialogclose', () => { this.dialog = undefined })
 
         this.dialogHelper.updateAll(teams, this.selectedTeamId, this.getAgentsForDisplay())
+        this.updateMapDisplayButtons(this.storageHelper.loadMapDisplayMode())
 
         $(`#${PLUGIN_NAME}-Tabs`).tabs()
 

@@ -115,22 +115,49 @@ td.item-breakdown {
     white-space: nowrap;
 }
 
-/* Combined team + personal marker — overrides Leaflet's 12×12 inline size */
+/* Active state for the Count / Icon toggle buttons in the team bar */
+button.map-display-active {
+    background: rgba(255, 200, 0, 0.15);
+    color: #ffcc00;
+    border-color: rgba(255, 200, 0, 0.6);
+    font-weight: bold;
+}
+
+/* Outer Leaflet DivIcon — zero-size anchor placed exactly at the portal pixel.
+   All visual styling lives on the inner .team-key-bubble child. */
 .layer-team-key-info {
-    width: auto !important;
-    height: auto !important;
-    font-size: 11px;
-    font-family: monospace;
-    color: #ffff00;
-    text-align: left;
-    background: rgba(0, 0, 0, 0.78);
-    border: 1px solid rgba(255, 200, 0, 0.55);
-    border-radius: 4px;
-    padding: 2px 6px;
-    line-height: 1.4;
-    white-space: nowrap;
+    overflow: visible !important;
     pointer-events: none;
     -webkit-text-size-adjust: none;
+}
+
+/* Visual bubble centred over the portal via transform */
+.team-key-bubble {
+    position: absolute;
+    left: 0;
+    top: 0;
+    transform: translate(-50%, -50%);
+    background: #111;
+    border: 1px solid rgba(255, 200, 0, 0.65);
+    border-radius: 4px;
+    padding: 3px 7px;
+    font-size: 11px;
+    font-family: monospace;
+    color: #ffcc00;
+    text-align: left;
+    white-space: nowrap;
+    line-height: 1.4;
+}
+
+/* Icon-mode variant: compact square padding for the SVG key */
+.team-key-bubble--icon {
+    padding: 4px;
+    line-height: 1;
+}
+
+/* Details popup: top-left corner at the portal pixel */
+.team-key-bubble--details {
+    transform: translate(0, 0);
 }
 
 /* Item icons */

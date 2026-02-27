@@ -14,9 +14,15 @@ export class LayerHelper {
     private inventoryLayerSuppressed = false
     private invOrigOnAdded: ((portal: Portal) => void) | null = null
     private mapEventsRegistered = false
+    private displayMode: 'count' | 'icon' = 'count'
 
     constructor(name: string) {
         window.addLayerGroup(name, this.layerGroup, true)
+    }
+
+    public setDisplayMode(mode: 'count' | 'icon'): void {
+        this.displayMode = mode
+        this.refreshMarkers()
     }
 
     public setKeys(keys: Map<string, KeyInfo>): void {
@@ -187,39 +193,58 @@ export class LayerHelper {
 
         const invInfo = this.getInventoryKeyInfo(guid)
 
-        // When personal inventory data is available, show "personal / team" counts.
-        // Otherwise show team count only (bold).
-        let html = invInfo
-            ? `${invInfo.total} / <strong>${keyInfo.total}</strong>`
-            : `<strong>${keyInfo.total}</strong>`
+        // In icon mode (portal not selected) show an inline SVG key.
+        // In count mode, or when the portal is selected (expanded), show the text label.
+        const isIconMode = this.displayMode === 'icon' && !withDetails
+
+        let innerHtml: string
+        if (isIconMode) {
+            innerHtml = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14">'
+                + '<path fill="currentColor" d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6'
+                + 'c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>'
+                + '</svg>'
+        } else {
+            innerHtml = invInfo
+                ? `${invInfo.total} / <strong>${keyInfo.total}</strong>`
+                : `<strong>${keyInfo.total}</strong>`
+        }
 
         if (withDetails) {
             if (invInfo) {
                 if (invInfo.atHand !== undefined) {
-                    html += `<br /><em>Hand: ${invInfo.atHand}</em>`
+                    innerHtml += `<br /><em>Hand: ${invInfo.atHand}</em>`
                 }
                 if (invInfo.capsules?.size) {
                     for (const [capsule, count] of invInfo.capsules) {
-                        html += `<br />${this.getInventoryCapsuleName(capsule)}: ${count}`
+                        innerHtml += `<br />${this.getInventoryCapsuleName(capsule)}: ${count}`
                     }
                 }
                 if (keyInfo.agentCounts.size > 0) {
-                    html += '<br />---'
+                    innerHtml += '<br />---'
                 }
             }
             for (const [agent, count] of keyInfo.agentCounts) {
-                html += `<br />${agent}: ${count}`
+                innerHtml += `<br />${agent}: ${count}`
             }
         }
+
+        let bubbleClass = 'team-key-bubble'
+        if (isIconMode) bubbleClass += ' team-key-bubble--icon'
+        else if (withDetails) bubbleClass += ' team-key-bubble--details'
 
         return L.marker(
             new L.LatLng(keyInfo.portal.lat, keyInfo.portal.lng),
             {
                 icon: new L.DivIcon({
-                    html,
+                    html: `<div class="${bubbleClass}">${innerHtml}</div>`,
                     className: 'layer-team-key-info',
+                    // Zero-size anchor so Leaflet places the div exactly at the portal
+                    // pixel with no offset — the inner bubble centres itself via CSS.
+                    iconSize: [0, 0],
+                    iconAnchor: [0, 0],
                 }),
                 interactive: false,
+                zIndexOffset: withDetails ? 10000 : 0,
             }
         )
     }

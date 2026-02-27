@@ -11,6 +11,12 @@
         <button onclick="{{plugin}}.deleteSelectedTeam()">Delete Team</button>
         &nbsp;&nbsp;
         <span>Total: <span class="cnt" id="{{prefix}}-cntTotal"></span></span>
+        &nbsp;&nbsp;
+        <span>
+            Map:&nbsp;
+            <button id="{{prefix}}-map-display-count" onclick="{{plugin}}.setMapDisplay('count')">Count</button>
+            <button id="{{prefix}}-map-display-icon"  onclick="{{plugin}}.setMapDisplay('icon')">Icon</button>
+        </span>
     </div>
 
     <div id="{{prefix}}-Tabs">

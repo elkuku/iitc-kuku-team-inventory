@@ -1,6 +1,7 @@
 import {AgentInventory, Team} from '../../types/Types'
 
 const STORAGE_KEY = 'plugin-kuku-team-inventory-teams'
+const MAP_DISPLAY_KEY = 'plugin-kuku-team-inventory-map-display'
 
 export class StorageHelper {
 
@@ -63,5 +64,13 @@ export class StorageHelper {
         if (!team) return
         team.agents = team.agents.filter(a => a.name !== agentName)
         this.saveTeams(teams)
+    }
+
+    public loadMapDisplayMode(): 'count' | 'icon' {
+        return (localStorage.getItem(MAP_DISPLAY_KEY) as 'count' | 'icon') ?? 'count'
+    }
+
+    public saveMapDisplayMode(mode: 'count' | 'icon'): void {
+        localStorage.setItem(MAP_DISPLAY_KEY, mode)
     }
 }
