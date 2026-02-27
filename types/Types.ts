@@ -65,6 +65,15 @@ declare global {
         plugin: {
             HelperHandlebars: HelperHandlebars
             KuKuTeamInventory: any
+            KuKuInventory?: {
+                layerHelper?: {
+                    keys?: Map<string, unknown>
+                    markers?: Map<string, L.Marker>
+                    layerGroup?: L.LayerGroup<L.Marker>
+                    onPortalAdded?: (portal: IITC.Portal) => void
+                }
+                capsuleNames?: Record<string, string>
+            }
         }
     }
 }
