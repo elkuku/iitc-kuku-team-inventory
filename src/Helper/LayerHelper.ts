@@ -217,7 +217,7 @@ export class LayerHelper {
             {
                 icon: new L.DivIcon({
                     html,
-                    className: 'layer-key-info',
+                    className: 'layer-team-key-info',
                 }),
                 interactive: false,
             }

@@ -115,6 +115,24 @@ td.item-breakdown {
     white-space: nowrap;
 }
 
+/* Combined team + personal marker — overrides Leaflet's 12×12 inline size */
+.layer-team-key-info {
+    width: auto !important;
+    height: auto !important;
+    font-size: 11px;
+    font-family: monospace;
+    color: #ffff00;
+    text-align: left;
+    background: rgba(0, 0, 0, 0.78);
+    border: 1px solid rgba(255, 200, 0, 0.55);
+    border-radius: 4px;
+    padding: 2px 6px;
+    line-height: 1.4;
+    white-space: nowrap;
+    pointer-events: none;
+    -webkit-text-size-adjust: none;
+}
+
 /* Item icons */
 .icon {
     min-width: 64px;
