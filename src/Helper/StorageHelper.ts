@@ -74,7 +74,7 @@ export class StorageHelper {
         const raw = localStorage.getItem(SETTINGS_KEY)
         if (!raw) return {mapDisplayMode: 'count'}
         try {
-            return {...{mapDisplayMode: 'count'}, ...JSON.parse(raw) as Partial<Settings>}
+            return {mapDisplayMode: 'count', ...JSON.parse(raw) as Partial<Settings>}
         } catch {
             return {mapDisplayMode: 'count'}
         }

@@ -12,7 +12,7 @@ export class LayerHelper {
     private keys = new Map<string, KeyInfo>()
     private readonly markers = new Map<string, L.Marker>()
     private inventoryLayerSuppressed = false
-    private invOrigOnAdded: ((portal: Portal) => void) | null = null
+    private invOrigOnAdded: ((portal: Portal) => void) | undefined = undefined
     private mapEventsRegistered = false
     private displayMode: 'count' | 'icon' = 'count'
 
@@ -40,11 +40,11 @@ export class LayerHelper {
         if (this.mapEventsRegistered || !window.map) return
         this.mapEventsRegistered = true
 
-        window.map.on('layerremove', (e) => {
-            if ((e as any).layer === this.layerGroup) this.onTeamLayerHidden()
+        window.map.on('layerremove', (event) => {
+            if ((event as any).layer === this.layerGroup) this.onTeamLayerHidden()
         })
-        window.map.on('layeradd', (e) => {
-            if ((e as any).layer === this.layerGroup) this.onTeamLayerShown()
+        window.map.on('layeradd', (event) => {
+            if ((event as any).layer === this.layerGroup) this.onTeamLayerShown()
         })
     }
 
@@ -130,7 +130,7 @@ export class LayerHelper {
         if (!invLayerHelper) return
 
         if (invLayerHelper.markers instanceof Map) {
-            for (const [guid, marker] of [...invLayerHelper.markers.entries()]) {
+            for (const [guid, marker] of invLayerHelper.markers.entries()) {
                 if (this.keys.has(guid)) {
                     invLayerHelper.layerGroup?.removeLayer(marker)
                     invLayerHelper.markers.delete(guid)
@@ -157,7 +157,7 @@ export class LayerHelper {
 
         // Remove any existing inventory markers that overlap with team portals
         if (invLayerHelper.markers instanceof Map) {
-            for (const [guid, marker] of [...invLayerHelper.markers.entries()]) {
+            for (const [guid, marker] of invLayerHelper.markers.entries()) {
                 if (this.keys.has(guid)) {
                     invLayerHelper.layerGroup?.removeLayer(marker)
                     invLayerHelper.markers.delete(guid)
@@ -176,7 +176,7 @@ export class LayerHelper {
     }
 
     private getInventoryLayerHelper() {
-        return window.plugin.KuKuInventory?.layerHelper ?? null
+        return window.plugin.KuKuInventory?.layerHelper
     }
 
     private getInventoryKeyInfo(guid: string): InventoryKeyInfo | undefined {

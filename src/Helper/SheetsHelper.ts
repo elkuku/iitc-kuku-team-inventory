@@ -135,12 +135,12 @@ export class SheetsHelper {
             const url = `${SHEETS_API_BASE}/${config.spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`
             this.sheetsRequest('PUT', url, {range, majorDimension: 'ROWS', values}, () => {
                 onDone?.()
-            }, (err: unknown) => {
-                console.error(`[KuKuTeamInventory] Error writing ${sheetName}:`, err)
+            }, (error: unknown) => {
+                console.error(`[KuKuTeamInventory] Error writing ${sheetName}:`, error)
                 onDone?.()
             })
-        }, (err: unknown) => {
-            console.error(`[KuKuTeamInventory] Error clearing ${sheetName}:`, err)
+        }, (error: unknown) => {
+            console.error(`[KuKuTeamInventory] Error clearing ${sheetName}:`, error)
             onDone?.()
         })
     }
@@ -162,7 +162,7 @@ export class SheetsHelper {
             ['_importedAt', ...agents.map(a => a.importedAt)],
             ['Item', ...agents.map(a => a.name)],
         ]
-        for (const item of [...allItems].sort()) {
+        for (const item of [...allItems].toSorted()) {
             rows.push([item, ...agents.map(a => String(a.weapons[item] ?? 0))])
         }
         return rows
@@ -173,7 +173,7 @@ export class SheetsHelper {
         for (const agent of agents) {
             for (const key of agent.keys) portals.set(key.guid, {title: key.title, lat: key.lat, lng: key.lng})
         }
-        const sortedPortals = [...portals.entries()].sort((a, b) => a[1].title.localeCompare(b[1].title))
+        const sortedPortals = [...portals.entries()].toSorted((a, b) => a[1].title.localeCompare(b[1].title))
         const rows: string[][] = [
             ['_importedAt', '', '', '', ...agents.map(a => a.importedAt)],
             ['Portal', 'GUID', 'Lat', 'Lng', ...agents.map(a => a.name)],
@@ -205,7 +205,7 @@ export class SheetsHelper {
             ['_importedAt', ...agents.map(a => a.importedAt)],
             ['Item', ...agents.map(a => a.name)],
         ]
-        for (const item of [...allItems].sort()) {
+        for (const item of [...allItems].toSorted()) {
             rows.push([item, ...agentItems.map(items => String(items[item] ?? 0))])
         }
         return rows
@@ -266,8 +266,8 @@ export class SheetsHelper {
                     return [`${base} - Weapons!A1:ZZ10000`, `${base} - Keys!A1:ZZ10000`, `${base} - Other!A1:ZZ10000`]
                 }),
             ]
-            const rangeParams = allRanges.map(r => `ranges=${encodeURIComponent(r)}`).join('&')
-            const batchUrl = `${SHEETS_API_BASE}/${config.spreadsheetId}/values:batchGet?${rangeParams}`
+            const rangeParameters = allRanges.map(r => `ranges=${encodeURIComponent(r)}`).join('&')
+            const batchUrl = `${SHEETS_API_BASE}/${config.spreadsheetId}/values:batchGet?${rangeParameters}`
 
             this.sheetsRequest('GET', batchUrl, undefined, (batchData: unknown) => {
                 try {
@@ -327,9 +327,9 @@ export class SheetsHelper {
         for (const row of weaponsData.slice(2)) {
             const item = row[0]
             if (!item) continue
-            for (let i = 0; i < agents.length; i++) {
-                const count = parseInt(row[i + 1] ?? '0', 10)
-                if (count > 0) agents[i].weapons[item] = count
+            for (const [index, agent] of agents.entries()) {
+                const count = parseInt(row[index + 1] ?? '0', 10)
+                if (count > 0) agent.weapons[item] = count
             }
         }
 
@@ -343,9 +343,9 @@ export class SheetsHelper {
                 lat: parseFloat(latStr ?? '0'),
                 lng: parseFloat(lngStr ?? '0'),
             }
-            for (let i = 0; i < agents.length; i++) {
-                const count = parseInt(counts[i] ?? '0', 10)
-                if (count > 0) agents[i].keys.push({...keyBase, total: count})
+            for (const [index, agent] of agents.entries()) {
+                const count = parseInt(counts[index] ?? '0', 10)
+                if (count > 0) agent.keys.push({...keyBase, total: count})
             }
         }
 
@@ -353,13 +353,13 @@ export class SheetsHelper {
         for (const row of otherData.slice(2)) {
             const item = row[0]
             if (!item) continue
-            for (let i = 0; i < agents.length; i++) {
-                const count = parseInt(row[i + 1] ?? '0', 10)
+            for (const [index, agent] of agents.entries()) {
+                const count = parseInt(row[index + 1] ?? '0', 10)
                 if (count <= 0) continue
-                if (item.startsWith('Resonator ')) agents[i].resonators[item.slice(10)] = count
-                else if (item.startsWith('Mod: ')) agents[i].mods[item.slice(5)] = count
-                else if (item.startsWith('Cube: ')) agents[i].cubes[item.slice(6)] = count
-                else if (item.startsWith('Boost: ')) agents[i].boosts[item.slice(7)] = count
+                if (item.startsWith('Resonator ')) agent.resonators[item.slice(10)] = count
+                else if (item.startsWith('Mod: ')) agent.mods[item.slice(5)] = count
+                else if (item.startsWith('Cube: ')) agent.cubes[item.slice(6)] = count
+                else if (item.startsWith('Boost: ')) agent.boosts[item.slice(7)] = count
             }
         }
 

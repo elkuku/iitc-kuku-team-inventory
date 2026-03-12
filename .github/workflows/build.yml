@@ -36,6 +36,7 @@ jobs:
       - name: Build HEAD
         run: |
           yarn install --immutable --frozen-lockfile
+          yarn test:coverage
           yarn build:dev
           mkdir -p build/dev
           cp -r dist/* build/dev/
@@ -90,7 +91,9 @@ jobs:
       # Build GitHub page
       # -------------------------------
       - name: Setup GitHub page
-        run: node .github/scripts/setup-github-page.js
+        run: |
+          node .github/scripts/setup-github-page.js
+          cp -r coverage gh_page/coverage
 
       - name: Upload build artifact to pages
         uses: actions/upload-pages-artifact@v3

@@ -9,13 +9,18 @@
     "build:dev": "yarn ipk build:dev",
     "build:prod": "yarn ipk build:prod",
     "start": "yarn ipk fileserver",
-    "autobuild": "yarn ipk autobuild"
+    "autobuild": "yarn ipk autobuild",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
+    "@vitest/coverage-v8": "^4.0.18",
     "eslint": "^9.39.2",
     "eslint-plugin-prefer-arrow-functions": "^3.9.1",
     "eslint-plugin-unicorn": "^62.0.0",
-    "typescript-eslint": "^8.53.0"
+    "typescript-eslint": "^8.53.0",
+    "vitest": "^4.0.18"
   }
 }
