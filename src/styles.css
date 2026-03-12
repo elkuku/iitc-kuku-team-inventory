@@ -70,6 +70,22 @@ table.inventoryTable td.count-container {
     vertical-align: top;
 }
 
+/* Focus bar shown above the agents table when an agent is highlighted */
+.agents-focus-bar {
+    padding: 4px 8px;
+    margin-bottom: 6px;
+    background: rgba(0, 255, 136, 0.08);
+    border: 1px solid rgba(0, 255, 136, 0.3);
+    border-radius: 4px;
+    font-size: 0.9em;
+}
+
+/* Row highlight for the currently focused agent */
+tr.agent-row-focused td {
+    background: rgba(0, 255, 136, 0.07);
+    color: #00ff88;
+}
+
 /* Agents table */
 table.agents-table td {
     text-align: left;
@@ -150,6 +166,18 @@ td.item-breakdown {
 /* Details popup: top-left corner at the portal pixel */
 .team-key-bubble--details {
     transform: translate(0, 0);
+}
+
+/* Agent focus highlight: portal where the focused agent has keys */
+.team-key-bubble--focused {
+    border-color: #00ff88;
+    color: #00ff88;
+}
+
+/* Agent focus dim: portal where the focused agent has no keys */
+.team-key-bubble--unfocused {
+    border-color: red;
+    color: red;
 }
 
 /* Item icons */

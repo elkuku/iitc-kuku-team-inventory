@@ -1,6 +1,14 @@
+{{#if focusedAgent}}
+<div class="agents-focus-bar">
+    Highlighting: <strong>{{focusedAgent}}</strong>
+    &nbsp;
+    <button onclick="{{plugin}}.clearFocusedAgent()">Clear</button>
+</div>
+{{/if}}
 <table class="inventoryTable agents-table">
     <thead>
         <tr>
+            <th>Focus</th>
             <th>Agent</th>
             <th>Imported</th>
             <th>Portals</th>
@@ -10,7 +18,14 @@
     </thead>
     <tbody>
         {{#each agents}}
-            <tr>
+            <tr{{#if this.focused}} class="agent-row-focused"{{/if}}>
+                <td>
+                    {{#unless this.focused}}
+                        <button onclick="{{../plugin}}.setFocusedAgent('{{this.name}}')">
+                            Focus
+                        </button>
+                    {{/unless}}
+                </td>
                 <td><strong>{{this.name}}</strong></td>
                 <td style="font-size: 0.85em">{{this.importedAt}}</td>
                 <td class="cnt">{{this.keyPortals}}</td>

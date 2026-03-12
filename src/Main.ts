@@ -29,6 +29,7 @@ class Main implements Plugin.Class {
     private exportHelper!: ExportHelper
     private dialog: JQuery | undefined
     private selectedTeamId: string | undefined
+    private focusedAgent: string | undefined
 
     init(): void {
         console.log(`${PLUGIN_NAME} ${VERSION}`)
@@ -62,7 +63,8 @@ class Main implements Plugin.Class {
         const teams = this.storageHelper.loadTeams()
         this.dialogHelper.updateTeamSelector(teams, this.selectedTeamId)
         this.dialogHelper.updateAgentsList(
-            this.selectedTeamId ? (teams.find(t => t.id === this.selectedTeamId) ?? undefined) : undefined
+            this.selectedTeamId ? (teams.find(t => t.id === this.selectedTeamId) ?? undefined) : undefined,
+            this.focusedAgent
         )
         this.dialogHelper.updateInventoryPanels(this.getAgentsForDisplay())
     }
@@ -156,11 +158,16 @@ class Main implements Plugin.Class {
     public deleteAgent = (teamId: string, agentName: string): void => {
         if (!confirm(`Remove agent "${agentName}" from team?`)) return
 
+        if (this.focusedAgent === agentName) {
+            this.focusedAgent = undefined
+            this.layerHelper.setFocusedAgent(undefined)
+        }
+
         this.storageHelper.removeAgent(teamId, agentName)
 
         const teams = this.storageHelper.loadTeams()
         const team = teams.find(t => t.id === teamId)
-        this.dialogHelper.updateAgentsList(team)
+        this.dialogHelper.updateAgentsList(team, this.focusedAgent)
         this.refreshMapAndSidebar()
         this.dialogHelper.updateInventoryPanels(this.getAgentsForDisplay())
     }
@@ -337,6 +344,22 @@ class Main implements Plugin.Class {
         })
     }
 
+    public setFocusedAgent = (agentName: string): void => {
+        this.focusedAgent = agentName
+        this.layerHelper.setFocusedAgent(agentName)
+        const teams = this.storageHelper.loadTeams()
+        const team = teams.find(t => t.id === this.selectedTeamId)
+        this.dialogHelper.updateAgentsList(team, agentName)
+    }
+
+    public clearFocusedAgent = (): void => {
+        this.focusedAgent = undefined
+        this.layerHelper.setFocusedAgent(undefined)
+        const teams = this.storageHelper.loadTeams()
+        const team = teams.find(t => t.id === this.selectedTeamId)
+        this.dialogHelper.updateAgentsList(team)
+    }
+
     public setMapDisplay = (mode: 'count' | 'icon'): void => {
         this.storageHelper.saveMapDisplayMode(mode)
         this.layerHelper.setDisplayMode(mode)
@@ -355,7 +378,7 @@ class Main implements Plugin.Class {
         this.dialog = this.dialogHelper.getDialog()
         this.dialog.on('dialogclose', () => { this.dialog = undefined })
 
-        this.dialogHelper.updateAll(teams, this.selectedTeamId, this.getAgentsForDisplay())
+        this.dialogHelper.updateAll(teams, this.selectedTeamId, this.getAgentsForDisplay(), this.focusedAgent)
         this.updateMapDisplayButtons(this.storageHelper.loadMapDisplayMode())
 
         $(`#${PLUGIN_NAME}-Tabs`).tabs()

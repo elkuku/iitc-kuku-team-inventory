@@ -76,10 +76,10 @@ export class DialogHelper {
         }).parent()
     }
 
-    public updateAll(teams: Team[], selectedTeamId: string | undefined, agents: AgentInventory[]): void {
+    public updateAll(teams: Team[], selectedTeamId: string | undefined, agents: AgentInventory[], focusedAgent?: string): void {
         this.updateTeamSelector(teams, selectedTeamId)
         const team = selectedTeamId ? (teams.find(t => t.id === selectedTeamId) ?? undefined) : undefined
-        this.updateAgentsList(team)
+        this.updateAgentsList(team, focusedAgent)
         this.updateInventoryPanels(agents)
     }
 
@@ -99,7 +99,7 @@ export class DialogHelper {
         }
     }
 
-    public updateAgentsList(team: Team | undefined): void {
+    public updateAgentsList(team: Team | undefined, focusedAgent?: string): void {
         const container = this.getContainer('AgentsList')
         if (!container) return
 
@@ -118,12 +118,14 @@ export class DialogHelper {
             importedAt: new Date(agent.importedAt).toLocaleString(),
             keyCount: agent.keys.reduce((sum, k) => sum + k.total, 0),
             keyPortals: agent.keys.length,
+            focused: agent.name === focusedAgent,
         }))
 
         container.innerHTML = this.agentsTpl({
             agents: agentData,
             teamId: team.id,
             plugin: `window.plugin.${this.pluginName}`,
+            focusedAgent,
         })
     }
 

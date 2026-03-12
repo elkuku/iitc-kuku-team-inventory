@@ -15,6 +15,7 @@ export class LayerHelper {
     private invOrigOnAdded: ((portal: Portal) => void) | undefined = undefined
     private mapEventsRegistered = false
     private displayMode: 'count' | 'icon' = 'count'
+    private focusedAgent: string | undefined = undefined
 
     constructor(name: string) {
         window.addLayerGroup(name, this.layerGroup, true)
@@ -22,6 +23,11 @@ export class LayerHelper {
 
     public setDisplayMode(mode: 'count' | 'icon'): void {
         this.displayMode = mode
+        this.refreshMarkers()
+    }
+
+    public setFocusedAgent(agentName: string | undefined): void {
+        this.focusedAgent = agentName
         this.refreshMarkers()
     }
 
@@ -197,12 +203,20 @@ export class LayerHelper {
         // In count mode, or when the portal is selected (expanded), show the text label.
         const isIconMode = this.displayMode === 'icon' && !withDetails
 
+        const hasFocus = this.focusedAgent !== undefined
+        const focusedCount = hasFocus ? (keyInfo.agentCounts.get(this.focusedAgent!) ?? 0) : 0
+        const agentHasKey = focusedCount > 0
+
         let innerHtml: string
         if (isIconMode) {
             innerHtml = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14">'
                 + '<path fill="currentColor" d="M12.65 10C11.83 7.67 9.61 6 7 6c-3.31 0-6 2.69-6 6s2.69 6 6 6'
                 + 'c2.61 0 4.83-1.67 5.65-4H17v4h4v-4h2v-4H12.65zM7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2z"/>'
                 + '</svg>'
+        } else if (hasFocus && !withDetails) {
+            innerHtml = agentHasKey
+                ? `<strong>${focusedCount}</strong>/${keyInfo.total}`
+                : `${keyInfo.total}`
         } else {
             innerHtml = invInfo
                 ? `${invInfo.total} / <strong>${keyInfo.total}</strong>`
@@ -229,8 +243,14 @@ export class LayerHelper {
         }
 
         let bubbleClass = 'team-key-bubble'
-        if (isIconMode) bubbleClass += ' team-key-bubble--icon'
-        else if (withDetails) bubbleClass += ' team-key-bubble--details'
+        if (isIconMode) {
+            bubbleClass += ' team-key-bubble--icon'
+            if (hasFocus) bubbleClass += agentHasKey ? ' team-key-bubble--focused' : ' team-key-bubble--unfocused'
+        } else if (withDetails) {
+            bubbleClass += ' team-key-bubble--details'
+        } else if (hasFocus) {
+            bubbleClass += agentHasKey ? ' team-key-bubble--focused' : ' team-key-bubble--unfocused'
+        }
 
         return L.marker(
             new L.LatLng(keyInfo.portal.lat, keyInfo.portal.lng),
