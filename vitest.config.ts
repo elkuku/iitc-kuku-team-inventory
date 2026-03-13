@@ -9,6 +9,7 @@ export default defineConfig({
     }],
     test: {
         include: ['src/**/*.spec.ts'],
+        exclude: ['src/**/*.browser.spec.ts'],
         coverage: {
             provider: 'v8',
             reporter: ['text', 'html', 'json-summary'],

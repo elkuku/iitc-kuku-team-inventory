@@ -5,6 +5,7 @@
       <excludeFolder url="file://$MODULE_DIR$/coverage" />
       <excludeFolder url="file://$MODULE_DIR$/gh_page" />
       <excludeFolder url="file://$MODULE_DIR$/test-data" />
+      <excludeFolder url="file://$MODULE_DIR$/screenshots" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

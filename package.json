@@ -12,15 +12,20 @@
     "autobuild": "yarn ipk autobuild",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:browser": "vitest run --config vitest.browser.config.ts"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
-    "@vitest/coverage-v8": "^4.0.18",
+    "@vitest/browser": "^4.1.0",
+    "@vitest/browser-playwright": "^4.1.0",
+    "@vitest/coverage-v8": "^4.1.0",
     "eslint": "^9.39.2",
     "eslint-plugin-prefer-arrow-functions": "^3.9.1",
     "eslint-plugin-unicorn": "^62.0.0",
+    "handlebars": "^4.7.8",
+    "playwright": "^1.58.2",
     "typescript-eslint": "^8.53.0",
-    "vitest": "^4.0.18"
+    "vitest": "^4.1.0"
   }
 }

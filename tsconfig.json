@@ -15,7 +15,8 @@
     "alwaysStrict": true,
     "strictNullChecks": true,
     "strictFunctionTypes": true,
-    "noUnusedLocals": true
+    "noUnusedLocals": true,
+    "allowSyntheticDefaultImports": true
   },
   "types": [
     "webpack-env"
@@ -26,6 +27,7 @@
   "include": [
     "types/*.d.ts",
     "./src/**/*.ts",
-    "vitest.config.ts"
+    "vitest.config.ts",
+    "vitest.browser.config.ts"
   ]
 }
