@@ -6,6 +6,7 @@ export default defineConfig({
         name: 'hbs-as-text',
         transform: (code: string, id: string) => {
             if (id.endsWith('.hbs')) return {code: `export default ${JSON.stringify(code)}`}
+            return undefined
         },
     }],
     test: {

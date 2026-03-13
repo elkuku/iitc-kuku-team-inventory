@@ -419,7 +419,7 @@ describe('DialogHelper', () => {
         it('eachInMap iterates a Map and concatenates block output', () => {
             const helpers = getHelpers()
             const map = new Map([['k1', 'v1'], ['k2', 'v2']])
-            const block = {fn: ({key, value}: {key: string; value: string}) => `${key}=${value};`}
+            const block = {fn: (context: unknown) => { const {key, value} = context as {key: string; value: string}; return `${key}=${value};` }}
             expect(helpers.eachInMap(map, block)).toBe('k1=v1;k2=v2;')
         })
 
