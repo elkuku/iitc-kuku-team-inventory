@@ -331,6 +331,7 @@ interface SheetsHelperInternals {
         onSuccess: (teams: unknown[]) => void,
     ): void
     loadGisScript(onReady: () => void): void
+    requestToken(onToken: () => void): void
     withToken(onReady: () => void): void
 }
 
@@ -474,6 +475,128 @@ describe('SheetsHelper (auth / network internals)', () => {
             const onReady = vi.fn()
             helper.withToken(onReady)
             expect(onReady).toHaveBeenCalledOnce()
+        })
+
+        it('when token is invalid: calls loadGisScript + requestToken', () => {
+            // Token is invalid (not set). GIS script tag already exists so loadGisScript calls onReady immediately.
+            store[CLIENT_ID_KEY] = 'cid'
+            store[SPREADSHEET_ID_KEY] = 'sid'
+            const requestAccessToken = vi.fn()
+            vi.stubGlobal('document', {
+                getElementById: vi.fn().mockReturnValue({id: 'gis-client-script'}),
+            })
+            vi.stubGlobal('google', {
+                accounts: {
+                    oauth2: {
+                        initTokenClient: vi.fn().mockReturnValue({requestAccessToken}),
+                    },
+                },
+            })
+            helper.withToken(vi.fn())
+            expect(requestAccessToken).toHaveBeenCalled()
+        })
+    })
+
+    describe('requestToken', () => {
+        it('returns early when there is no config', () => {
+            // No localStorage data → loadConfig returns undefined
+            const onToken = vi.fn()
+            helper.requestToken(onToken)
+            expect(onToken).not.toHaveBeenCalled()
+        })
+
+        it('initializes tokenClient and calls requestAccessToken when config exists', () => {
+            store[CLIENT_ID_KEY] = 'cid'
+            store[SPREADSHEET_ID_KEY] = 'sid'
+            const requestAccessToken = vi.fn()
+            const initTokenClient = vi.fn().mockReturnValue({requestAccessToken})
+            vi.stubGlobal('google', {
+                accounts: {
+                    oauth2: {initTokenClient},
+                },
+            })
+            helper.requestToken(vi.fn())
+            expect(initTokenClient).toHaveBeenCalledWith(expect.objectContaining({client_id: 'cid'}))
+            expect(requestAccessToken).toHaveBeenCalledWith({prompt: ''})
+        })
+
+        it('calls onToken when callback receives a successful response', () => {
+            store[CLIENT_ID_KEY] = 'cid'
+            store[SPREADSHEET_ID_KEY] = 'sid'
+            const requestAccessToken = vi.fn()
+            let capturedCallback: ((response: {access_token?: string; expires_in?: number; error?: string}) => void) | undefined
+            const initTokenClient = vi.fn().mockImplementation((options: {callback: typeof capturedCallback}) => {
+                capturedCallback = options.callback
+                return {requestAccessToken}
+            })
+            vi.stubGlobal('google', {
+                accounts: {
+                    oauth2: {initTokenClient},
+                },
+            })
+            const onToken = vi.fn()
+            helper.requestToken(onToken)
+            capturedCallback?.({access_token: 'tok', expires_in: 3600})
+            expect(onToken).toHaveBeenCalledOnce()
+            expect(helper.accessToken).toBe('tok')
+        })
+
+        it('does NOT call onToken when callback has an error field', () => {
+            store[CLIENT_ID_KEY] = 'cid'
+            store[SPREADSHEET_ID_KEY] = 'sid'
+            const requestAccessToken = vi.fn()
+            let capturedCallback: ((response: {access_token?: string; expires_in?: number; error?: string}) => void) | undefined
+            const initTokenClient = vi.fn().mockImplementation((options: {callback: typeof capturedCallback}) => {
+                capturedCallback = options.callback
+                return {requestAccessToken}
+            })
+            vi.stubGlobal('google', {
+                accounts: {
+                    oauth2: {initTokenClient},
+                },
+            })
+            const onToken = vi.fn()
+            helper.requestToken(onToken)
+            capturedCallback?.({error: 'access_denied'})
+            expect(onToken).not.toHaveBeenCalled()
+        })
+
+        it('reuses existing tokenClient on second call', () => {
+            store[CLIENT_ID_KEY] = 'cid'
+            store[SPREADSHEET_ID_KEY] = 'sid'
+            const requestAccessToken = vi.fn()
+            const initTokenClient = vi.fn().mockReturnValue({requestAccessToken})
+            vi.stubGlobal('google', {
+                accounts: {
+                    oauth2: {initTokenClient},
+                },
+            })
+            helper.requestToken(vi.fn())
+            helper.requestToken(vi.fn())
+            expect(initTokenClient).toHaveBeenCalledTimes(1)
+            expect(requestAccessToken).toHaveBeenCalledTimes(2)
+        })
+    })
+
+    describe('pullFromSheets with valid token', () => {
+        it('sets "Reading sheets…" status when token is valid', () => {
+            store[CLIENT_ID_KEY] = 'cid'
+            store[SPREADSHEET_ID_KEY] = 'sid'
+            helper.accessToken = 'tok'
+            helper.tokenExpiresAt = Date.now() + 120_000
+
+            const element = {textContent: ''}
+            vi.stubGlobal('document', {getElementById: vi.fn().mockReturnValue(element)})
+            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+                ok: true,
+                json: () => Promise.resolve({sheets: []}),
+            }))
+
+            ;(helper as unknown as SheetsHelper).pullFromSheets('status-el', vi.fn())
+
+            // Check synchronously: withToken called onReady immediately (valid token),
+            // so setStatus('Reading sheets…') should have been called before any await.
+            expect(element.textContent).toBe('Reading sheets…')
         })
     })
 

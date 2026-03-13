@@ -94,6 +94,7 @@ describe('DialogHelper', () => {
             const result = h.sortByNumericSuffix(input)
             expect([...result.values()].map(v => v.total)).toEqual([5, 10])
         })
+
     })
 
     describe('sortByCompoundKey', () => {
@@ -307,6 +308,20 @@ describe('DialogHelper', () => {
             expect(rows[0].style.display).toBe('')
             expect(rows[1].style.display).toBe('')
         })
+
+        it('does not throw when the handler fires but the table is not found', () => {
+            let inputHandler: (() => void) | undefined
+            const mockInput = {
+                dataset: {} as Record<string, string>,
+                value: 'alpha',
+                addEventListener: vi.fn((_event: string, handler: () => void) => { inputHandler = handler }),
+            }
+            vi.stubGlobal('document', {
+                getElementById: vi.fn((id: string) => id === 'inputId' ? mockInput : undefined),
+            })
+            makeHelper().enableKeysSearch('tableId', 'inputId')
+            expect(() => inputHandler?.()).not.toThrow()
+        })
     })
 
     describe('enableTableSorting', () => {
@@ -366,6 +381,37 @@ describe('DialogHelper', () => {
             clickListeners[0]()
             expect(appended).toHaveLength(2)
             expect(indicator.textContent).toBe('▼') // ascending toggled to false → shows ▼
+        })
+
+        it('shows ▲ on the second click', () => {
+            const clickListeners: (() => void)[] = []
+            const indicator = {style: {marginLeft: ''}, textContent: ''}
+            const headers = [
+                {
+                    dataset: {type: 'string'},
+                    appendChild: vi.fn(),
+                    addEventListener: vi.fn((_event: string, handler: () => void) => clickListeners.push(handler)),
+                    querySelector: vi.fn().mockReturnValue({textContent: ''}),
+                },
+            ]
+            const rows = makeTableRows([['b'], ['a']])
+            const appended: typeof rows = []
+            const mockTable = {
+                dataset: {} as Record<string, string>,
+                querySelectorAll: vi.fn().mockReturnValue(headers),
+                tBodies: [{rows, appendChild: (r: typeof rows[0]) => appended.push(r)}],
+            }
+            vi.stubGlobal('document', {
+                getElementById: vi.fn().mockReturnValue(mockTable),
+                createElement: vi.fn().mockReturnValue(indicator),
+            })
+            makeHelper().enableTableSorting('tableId')
+            // First click: ascending=true → sort ascending, then ascending becomes false → indicator '▼'
+            clickListeners[0]()
+            expect(indicator.textContent).toBe('▼')
+            // Second click: ascending=false → sort descending, then ascending becomes true → indicator '▲'
+            clickListeners[0]()
+            expect(indicator.textContent).toBe('▲')
         })
     })
 
