@@ -314,6 +314,17 @@ interface SheetsHelperInternals {
         values: string[][],
         onDone?: () => void,
     ): void
+    writeTeamCategory(
+        config: {clientId: string; spreadsheetId: string},
+        team: Team,
+        category: 'Weapons' | 'Keys' | 'Other',
+        onDone: () => void,
+    ): void
+    writeAllSheets(
+        config: {clientId: string; spreadsheetId: string},
+        teams: Team[],
+        statusElementId: string,
+    ): void
     readAllSheets(
         config: {clientId: string; spreadsheetId: string},
         statusElementId: string,
@@ -611,6 +622,113 @@ describe('SheetsHelper (auth / network internals)', () => {
             vi.stubGlobal('document', {getElementById: vi.fn().mockReturnValue(statusElement)})
             helper.readAllSheets(config, 'status-el', vi.fn())
             await vi.waitFor(() => { expect(statusElement.textContent).toContain('Error') })
+        })
+
+        it('sets error status when the batch request fails', async () => {
+            helper.accessToken = 'tok'
+            let callCount = 0
+            vi.stubGlobal('fetch', vi.fn().mockImplementation(() => {
+                callCount++
+                if (callCount === 1) {
+                    return Promise.resolve({
+                        ok: true,
+                        json: () => Promise.resolve({
+                            sheets: [{properties: {title: 'Alpha - Weapons'}}],
+                        }),
+                    })
+                }
+                return Promise.resolve({
+                    ok: false,
+                    text: () => Promise.resolve('Service Unavailable'),
+                })
+            }))
+            const statusElement = {textContent: ''}
+            vi.stubGlobal('document', {getElementById: vi.fn().mockReturnValue(statusElement)})
+            helper.readAllSheets(config, 'status-el', vi.fn())
+            await vi.waitFor(() => { expect(statusElement.textContent).toContain('Error reading') })
+        })
+
+        it('sets error status when the batch response cannot be parsed', async () => {
+            helper.accessToken = 'tok'
+            let callCount = 0
+            vi.stubGlobal('fetch', vi.fn().mockImplementation(() => {
+                callCount++
+                if (callCount === 1) {
+                    return Promise.resolve({
+                        ok: true,
+                        json: () => Promise.resolve({
+                            sheets: [{properties: {title: 'Alpha - Weapons'}}],
+                        }),
+                    })
+                }
+                // Returning undefined causes (undefined as any).valueRanges to throw
+                return Promise.resolve({
+                    ok: true,
+                    json: () => Promise.resolve(),
+                })
+            }))
+            const statusElement = {textContent: ''}
+            vi.stubGlobal('document', {getElementById: vi.fn().mockReturnValue(statusElement)})
+            helper.readAllSheets(config, 'status-el', vi.fn())
+            await vi.waitFor(() => { expect(statusElement.textContent).toContain('Error: failed to parse') })
+        })
+    })
+
+    describe('writeTeamCategory', () => {
+        const config = {clientId: 'cid', spreadsheetId: 'sid'}
+        const team: Team = {
+            id: 'team-id',
+            name: 'Alpha',
+            agents: [makeAgent('A1', {weapons: {XMP8: 5}})],
+        }
+
+        const successFetch = vi.fn().mockResolvedValue({ok: true, json: () => Promise.resolve({})})
+
+        it('calls onDone after writing the Weapons category', async () => {
+            helper.accessToken = 'tok'
+            vi.stubGlobal('fetch', successFetch)
+            const onDone = vi.fn()
+            helper.writeTeamCategory(config, team, 'Weapons', onDone)
+            await vi.waitFor(() => { expect(onDone).toHaveBeenCalledOnce() })
+        })
+
+        it('calls onDone after writing the Keys category', async () => {
+            helper.accessToken = 'tok'
+            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ok: true, json: () => Promise.resolve({})}))
+            const onDone = vi.fn()
+            helper.writeTeamCategory(config, team, 'Keys', onDone)
+            await vi.waitFor(() => { expect(onDone).toHaveBeenCalledOnce() })
+        })
+
+        it('calls onDone after writing the Other category', async () => {
+            helper.accessToken = 'tok'
+            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ok: true, json: () => Promise.resolve({})}))
+            const onDone = vi.fn()
+            helper.writeTeamCategory(config, team, 'Other', onDone)
+            await vi.waitFor(() => { expect(onDone).toHaveBeenCalledOnce() })
+        })
+    })
+
+    describe('writeAllSheets', () => {
+        const config = {clientId: 'cid', spreadsheetId: 'sid'}
+
+        it('sets pushed status after writing zero teams', async () => {
+            helper.accessToken = 'tok'
+            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ok: true, json: () => Promise.resolve({})}))
+            const statusElement = {textContent: ''}
+            vi.stubGlobal('document', {getElementById: vi.fn().mockReturnValue(statusElement)})
+            helper.writeAllSheets(config, [], 'status-el')
+            await vi.waitFor(() => { expect(statusElement.textContent).toContain('Pushed at') })
+        })
+
+        it('sets pushed status after writing one team with all categories', async () => {
+            helper.accessToken = 'tok'
+            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ok: true, json: () => Promise.resolve({})}))
+            const statusElement = {textContent: ''}
+            vi.stubGlobal('document', {getElementById: vi.fn().mockReturnValue(statusElement)})
+            const teams: Team[] = [{id: 'tid', name: 'Alpha', agents: [makeAgent('A1')]}]
+            helper.writeAllSheets(config, teams, 'status-el')
+            await vi.waitFor(() => { expect(statusElement.textContent).toContain('Pushed at') })
         })
     })
 })

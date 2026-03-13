@@ -21,6 +21,17 @@ const parseDistance = (str: string): number =>
 const makeHelper = (): DialogHelper =>
     new DialogHelper('KuKuTeamInventory', 'Team Inventory', new InventoryHelper())
 
+const makeAgent = (name: string): AgentInventory => ({
+    name,
+    importedAt: '2024-01-01T00:00:00.000Z',
+    keys: [],
+    resonators: {},
+    weapons: {},
+    mods: {},
+    cubes: {},
+    boosts: {},
+})
+
 const makeItem = (total: number): ItemWithBreakdown => ({total, agents: new Map()})
 
 const makeTableRows = (cellTexts: string[][]): {cells: {textContent: string}[]}[] =>
@@ -171,6 +182,21 @@ describe('DialogHelper', () => {
             vi.stubGlobal('document', {getElementById: vi.fn().mockReturnValue(container)})
             makeHelper().updateAgentsList({id: 't1', name: 'T', agents: []})
             expect(container.innerHTML).toContain('No agents')
+        })
+
+        it('renders agents via agentsTpl when team has agents', () => {
+            const helper = makeHelper()
+            const agentsTplSpy = vi.fn().mockReturnValue('<ul>rendered-agents</ul>')
+            ;(helper as unknown as {agentsTpl: unknown}).agentsTpl = agentsTplSpy
+            const container = {innerHTML: ''}
+            vi.stubGlobal('document', {getElementById: vi.fn().mockReturnValue(container)})
+            const agentWithKeys: AgentInventory = {
+                ...makeAgent('A1'),
+                keys: [{guid: 'g1', title: 'Portal', lat: 1, lng: 2, total: 5}],
+            }
+            helper.updateAgentsList({id: 't1', name: 'T', agents: [agentWithKeys]})
+            expect(agentsTplSpy).toHaveBeenCalledOnce()
+            expect(container.innerHTML).toBe('<ul>rendered-agents</ul>')
         })
     })
 
@@ -340,6 +366,132 @@ describe('DialogHelper', () => {
             clickListeners[0]()
             expect(appended).toHaveLength(2)
             expect(indicator.textContent).toBe('▼') // ascending toggled to false → shows ▼
+        })
+    })
+
+    describe('getDialog', () => {
+        it('alerts and throws when HelperHandlebars is not available', () => {
+            vi.stubGlobal('alert', vi.fn())
+            vi.stubGlobal('window', {plugin: {}})
+            expect(() => makeHelper().getDialog()).toThrow('Handlebars helper not found')
+            expect(alert).toHaveBeenCalledWith(expect.stringContaining('Handlebars helper not found'))
+        })
+
+        it('returns the dialog parent when HelperHandlebars is available', () => {
+            const mockHandlebars = {
+                registerHelper: vi.fn(),
+                compile: vi.fn().mockReturnValue(() => ''),
+            }
+            const mockParent = {id: 'dialog-parent'}
+            const mockDialogResult = {parent: vi.fn().mockReturnValue(mockParent)}
+            vi.stubGlobal('window', {
+                plugin: {HelperHandlebars: mockHandlebars},
+                dialog: vi.fn().mockReturnValue(mockDialogResult),
+            })
+            const result = makeHelper().getDialog()
+            expect(result).toBe(mockParent)
+            expect(mockHandlebars.registerHelper).toHaveBeenCalledOnce()
+            expect(mockHandlebars.compile).toHaveBeenCalledTimes(5)
+        })
+    })
+
+    describe('registered Handlebars helpers', () => {
+        interface RegisteredHelpers {
+            eachInMap(map: unknown, block: {fn: (context: unknown) => string}): string
+            translateKey(key: string): string
+            distanceToCenter(lat: number, lng: number): string
+        }
+
+        const getHelpers = (): RegisteredHelpers => {
+            let captured: RegisteredHelpers | undefined
+            const mockHandlebars = {
+                registerHelper: vi.fn((helpers: RegisteredHelpers) => { captured = helpers }),
+                compile: vi.fn().mockReturnValue(() => ''),
+            }
+            vi.stubGlobal('window', {
+                plugin: {HelperHandlebars: mockHandlebars},
+                dialog: vi.fn().mockReturnValue({parent: vi.fn()}),
+            })
+            makeHelper().getDialog()
+            return captured!
+        }
+
+        it('eachInMap iterates a Map and concatenates block output', () => {
+            const helpers = getHelpers()
+            const map = new Map([['k1', 'v1'], ['k2', 'v2']])
+            const block = {fn: ({key, value}: {key: string; value: string}) => `${key}=${value};`}
+            expect(helpers.eachInMap(map, block)).toBe('k1=v1;k2=v2;')
+        })
+
+        it('eachInMap returns empty string for a non-Map', () => {
+            const helpers = getHelpers()
+            const block = {fn: () => 'x'}
+            expect(helpers.eachInMap({}, block)).toBe('')
+        })
+
+        it('translateKey delegates to the key-translations module', () => {
+            const helpers = getHelpers()
+            // translateKey('EMP_BURSTER_8') should return a translated label, not the raw key
+            const result = helpers.translateKey('EMP_BURSTER_8')
+            expect(typeof result).toBe('string')
+            expect(result).not.toBe('')
+        })
+
+        it('distanceToCenter returns metres for distances under 1000 m', () => {
+            const helpers = getHelpers()
+            vi.stubGlobal('window', {
+                map: {getCenter: vi.fn().mockReturnValue({lat: 0, lng: 0})},
+            })
+            vi.stubGlobal('L', {
+                latLng: vi.fn().mockReturnValue({distanceTo: vi.fn().mockReturnValue(500)}),
+            })
+            expect(helpers.distanceToCenter(0, 0)).toBe('500 m')
+        })
+
+        it('distanceToCenter returns decimal km for 1000–9999 m', () => {
+            const helpers = getHelpers()
+            vi.stubGlobal('window', {
+                map: {getCenter: vi.fn().mockReturnValue({lat: 0, lng: 0})},
+            })
+            vi.stubGlobal('L', {
+                latLng: vi.fn().mockReturnValue({distanceTo: vi.fn().mockReturnValue(2500)}),
+            })
+            expect(helpers.distanceToCenter(0, 0)).toBe('2.5 km')
+        })
+
+        it('distanceToCenter returns rounded km for distances >= 10000 m', () => {
+            const helpers = getHelpers()
+            vi.stubGlobal('window', {
+                map: {getCenter: vi.fn().mockReturnValue({lat: 0, lng: 0})},
+            })
+            vi.stubGlobal('L', {
+                latLng: vi.fn().mockReturnValue({distanceTo: vi.fn().mockReturnValue(15_000)}),
+            })
+            expect(helpers.distanceToCenter(0, 0)).toBe('15 km')
+        })
+    })
+
+    describe('updateAll', () => {
+        it('delegates to updateTeamSelector, updateAgentsList, and updateInventoryPanels', () => {
+            const helper = makeHelper()
+            // stub document so all three methods exit early without throwing
+            vi.stubGlobal('document', {getElementById: vi.fn()})
+            const selectSpy = vi.spyOn(helper, 'updateTeamSelector')
+            const agentsSpy = vi.spyOn(helper, 'updateAgentsList')
+            const panelsSpy = vi.spyOn(helper, 'updateInventoryPanels')
+            helper.updateAll([], undefined, [])
+            expect(selectSpy).toHaveBeenCalledOnce()
+            expect(agentsSpy).toHaveBeenCalledOnce()
+            expect(panelsSpy).toHaveBeenCalledOnce()
+        })
+
+        it('passes the found team and focusedAgent to updateAgentsList', () => {
+            const helper = makeHelper()
+            vi.stubGlobal('document', {getElementById: vi.fn()})
+            const agentsSpy = vi.spyOn(helper, 'updateAgentsList')
+            const teams: Team[] = [{id: 'tid', name: 'Alpha', agents: []}]
+            helper.updateAll(teams, 'tid', [], 'focused-agent')
+            expect(agentsSpy).toHaveBeenCalledWith(teams[0], 'focused-agent')
         })
     })
 
