@@ -307,6 +307,18 @@ interface SheetsHelperInternals {
         onSuccess: (data: unknown) => void,
         onError: (error: unknown) => void,
     ): void
+    ensureTab(config: {clientId: string; spreadsheetId: string}, tabName: string, onCreated: () => void): void
+    writeSheetData(
+        config: {clientId: string; spreadsheetId: string},
+        sheetName: string,
+        values: string[][],
+        onDone?: () => void,
+    ): void
+    readAllSheets(
+        config: {clientId: string; spreadsheetId: string},
+        statusElementId: string,
+        onSuccess: (teams: unknown[]) => void,
+    ): void
     loadGisScript(onReady: () => void): void
     withToken(onReady: () => void): void
 }
@@ -451,6 +463,154 @@ describe('SheetsHelper (auth / network internals)', () => {
             const onReady = vi.fn()
             helper.withToken(onReady)
             expect(onReady).toHaveBeenCalledOnce()
+        })
+    })
+
+    describe('ensureTab', () => {
+        const config = {clientId: 'cid', spreadsheetId: 'sid'}
+
+        it('calls onCreated when the tab is successfully created', async () => {
+            helper.accessToken = 'tok'
+            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+                ok: true,
+                json: () => Promise.resolve({}),
+            }))
+            const onCreated = vi.fn()
+            helper.ensureTab(config, 'MyTab', onCreated)
+            await vi.waitFor(() => { expect(onCreated).toHaveBeenCalledOnce() })
+        })
+
+        it('calls onCreated when the tab already exists', async () => {
+            helper.accessToken = 'tok'
+            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+                ok: false,
+                text: () => Promise.resolve('already exists'),
+            }))
+            const onCreated = vi.fn()
+            helper.ensureTab(config, 'MyTab', onCreated)
+            await vi.waitFor(() => { expect(onCreated).toHaveBeenCalledOnce() })
+        })
+
+        it('does not call onCreated on an unrelated error', async () => {
+            helper.accessToken = 'tok'
+            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+                ok: false,
+                text: () => Promise.resolve('Internal Server Error'),
+            }))
+            const onCreated = vi.fn()
+            helper.ensureTab(config, 'MyTab', onCreated)
+            await new Promise<void>(resolve => setTimeout(resolve, 20))
+            expect(onCreated).not.toHaveBeenCalled()
+        })
+    })
+
+    describe('writeSheetData', () => {
+        const config = {clientId: 'cid', spreadsheetId: 'sid'}
+
+        it('clears then writes and calls onDone on full success', async () => {
+            helper.accessToken = 'tok'
+            const fetchMock = vi.fn().mockResolvedValue({
+                ok: true,
+                json: () => Promise.resolve({}),
+            })
+            vi.stubGlobal('fetch', fetchMock)
+            const onDone = vi.fn()
+            helper.writeSheetData(config, 'Sheet1', [['A', 'B']], onDone)
+            await vi.waitFor(() => { expect(onDone).toHaveBeenCalledOnce() })
+            expect(fetchMock).toHaveBeenCalledTimes(2)
+        })
+
+        it('calls onDone even when the clear request fails', async () => {
+            helper.accessToken = 'tok'
+            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+                ok: false,
+                text: () => Promise.resolve('Error'),
+            }))
+            const onDone = vi.fn()
+            helper.writeSheetData(config, 'Sheet1', [], onDone)
+            await vi.waitFor(() => { expect(onDone).toHaveBeenCalledOnce() })
+        })
+
+        it('calls onDone even when the write request fails', async () => {
+            helper.accessToken = 'tok'
+            let callCount = 0
+            vi.stubGlobal('fetch', vi.fn().mockImplementation(() => {
+                callCount++
+                return Promise.resolve(
+                    callCount === 1
+                        ? {ok: true, json: () => Promise.resolve({})}
+                        : {ok: false, text: () => Promise.resolve('Write error')},
+                )
+            }))
+            const onDone = vi.fn()
+            helper.writeSheetData(config, 'Sheet1', [], onDone)
+            await vi.waitFor(() => { expect(onDone).toHaveBeenCalledOnce() })
+        })
+    })
+
+    describe('readAllSheets', () => {
+        const config = {clientId: 'cid', spreadsheetId: 'sid'}
+
+        beforeEach(() => {
+            const statusElement = {textContent: ''}
+            vi.stubGlobal('document', {getElementById: vi.fn().mockReturnValue(statusElement)})
+        })
+
+        it('sets error status when no team sheets are found', async () => {
+            helper.accessToken = 'tok'
+            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+                ok: true,
+                json: () => Promise.resolve({sheets: [{properties: {title: 'SomeOtherTab'}}]}),
+            }))
+            const statusElement = {textContent: ''}
+            vi.stubGlobal('document', {getElementById: vi.fn().mockReturnValue(statusElement)})
+            helper.readAllSheets(config, 'status-el', vi.fn())
+            await vi.waitFor(() => { expect(statusElement.textContent).toContain('Error') })
+        })
+
+        it('calls onSuccess with reconstructed teams on full success', async () => {
+            helper.accessToken = 'tok'
+            let callCount = 0
+            vi.stubGlobal('fetch', vi.fn().mockImplementation(() => {
+                callCount++
+                if (callCount === 1) {
+                    return Promise.resolve({
+                        ok: true,
+                        json: () => Promise.resolve({
+                            sheets: [{properties: {title: 'Alpha - Weapons'}}],
+                        }),
+                    })
+                }
+                return Promise.resolve({
+                    ok: true,
+                    json: () => Promise.resolve({
+                        valueRanges: [
+                            {values: [['Team', 'ID'], ['Alpha', 'team-alpha-id']]},
+                            {values: [['_importedAt', '2024-01-01'], ['Item', 'A1'], ['XMP8', '5']]},
+                            {values: [['_importedAt', '', '', ''], ['Portal', 'GUID', 'Lat', 'Lng', 'A1']]},
+                            {values: [['_importedAt', ''], ['Item', 'A1']]},
+                        ],
+                    }),
+                })
+            }))
+            const onSuccess = vi.fn()
+            helper.readAllSheets(config, 'status-el', onSuccess)
+            await vi.waitFor(() => { expect(onSuccess).toHaveBeenCalledOnce() })
+            const teams = onSuccess.mock.calls[0][0] as {name: string; id: string}[]
+            expect(teams[0].name).toBe('Alpha')
+            expect(teams[0].id).toBe('team-alpha-id')
+        })
+
+        it('sets error status when the meta request fails', async () => {
+            helper.accessToken = 'tok'
+            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+                ok: false,
+                text: () => Promise.resolve('Forbidden'),
+            }))
+            const statusElement = {textContent: ''}
+            vi.stubGlobal('document', {getElementById: vi.fn().mockReturnValue(statusElement)})
+            helper.readAllSheets(config, 'status-el', vi.fn())
+            await vi.waitFor(() => { expect(statusElement.textContent).toContain('Error') })
         })
     })
 })

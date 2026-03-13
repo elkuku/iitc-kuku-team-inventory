@@ -1,4 +1,4 @@
-import {describe, it, expect, vi, afterEach} from 'vitest'
+import {describe, it, expect, vi, afterEach, beforeEach} from 'vitest'
 
 vi.mock('../tpl/dialog.hbs', () => ({default: ''}))
 vi.mock('../tpl/_items-image.hbs', () => ({default: ''}))
@@ -8,7 +8,7 @@ vi.mock('../tpl/_agents-list.hbs', () => ({default: ''}))
 
 import {DialogHelper} from './Dialog'
 import {InventoryHelper} from './InventoryHelper'
-import type {ItemWithBreakdown, Team} from '../../types/Types'
+import type {AgentInventory, ItemWithBreakdown, Team} from '../../types/Types'
 
 interface DialogHelperTestable {
     sortByNumericSuffix<V>(map: Map<string, V>): Map<string, V>
@@ -25,6 +25,18 @@ const makeItem = (total: number): ItemWithBreakdown => ({total, agents: new Map(
 
 const makeTableRows = (cellTexts: string[][]): {cells: {textContent: string}[]}[] =>
     cellTexts.map(cells => ({cells: cells.map(text => ({textContent: text}))}))
+
+// DOM element mock covering all usages: getContainer / setCount /
+// enableTableSorting / enableKeysSearch all work without errors.
+const makeElement = (): Record<string, unknown> => ({
+    innerHTML: '',
+    textContent: '',
+    dataset: {} as Record<string, string>,
+    querySelectorAll: vi.fn().mockReturnValue([]),
+    addEventListener: vi.fn(),
+    value: '',
+    tBodies: [{rows: []}],
+})
 
 describe('DialogHelper', () => {
     afterEach(() => {
@@ -222,6 +234,150 @@ describe('DialogHelper', () => {
             makeHelper().enableKeysSearch('tableId', 'inputId')
             expect(addEventListenerSpy).toHaveBeenCalledWith('input', expect.any(Function))
             expect(mockInput.dataset.searchEnabled).toBe('true')
+        })
+
+        it('hides rows not matching the query and shows matching ones', () => {
+            let inputHandler: (() => void) | undefined
+            const mockInput = {
+                dataset: {} as Record<string, string>,
+                value: 'alpha',
+                addEventListener: vi.fn((_event: string, handler: () => void) => { inputHandler = handler }),
+            }
+            const rows = [
+                {cells: [{textContent: 'Portal Alpha'}], style: {display: ''}},
+                {cells: [{textContent: 'Portal Beta'}], style: {display: ''}},
+            ]
+            const mockTable = {tBodies: [{rows}]}
+            vi.stubGlobal('document', {
+                getElementById: vi.fn((id: string) =>
+                    id === 'inputId' ? mockInput : mockTable
+                ),
+            })
+            makeHelper().enableKeysSearch('tableId', 'inputId')
+            inputHandler?.()
+            expect(rows[0].style.display).toBe('')
+            expect(rows[1].style.display).toBe('none')
+        })
+
+        it('shows all rows when the query is cleared', () => {
+            let inputHandler: (() => void) | undefined
+            const mockInput = {
+                dataset: {} as Record<string, string>,
+                value: '',
+                addEventListener: vi.fn((_event: string, handler: () => void) => { inputHandler = handler }),
+            }
+            const rows = [
+                {cells: [{textContent: 'Portal Alpha'}], style: {display: 'none'}},
+                {cells: [{textContent: 'Portal Beta'}], style: {display: 'none'}},
+            ]
+            const mockTable = {tBodies: [{rows}]}
+            vi.stubGlobal('document', {
+                getElementById: vi.fn((id: string) =>
+                    id === 'inputId' ? mockInput : mockTable
+                ),
+            })
+            makeHelper().enableKeysSearch('tableId', 'inputId')
+            inputHandler?.()
+            expect(rows[0].style.display).toBe('')
+            expect(rows[1].style.display).toBe('')
+        })
+    })
+
+    describe('enableTableSorting', () => {
+        it('returns early when table is not found', () => {
+            vi.stubGlobal('document', {getElementById: vi.fn()})
+            expect(() => makeHelper().enableTableSorting('tableId')).not.toThrow()
+        })
+
+        it('returns early when already sort-enabled', () => {
+            const mockTable = {dataset: {sortEnabled: 'true'}, querySelectorAll: vi.fn()}
+            vi.stubGlobal('document', {getElementById: vi.fn().mockReturnValue(mockTable)})
+            makeHelper().enableTableSorting('tableId')
+            expect(mockTable.querySelectorAll).not.toHaveBeenCalled()
+        })
+
+        it('marks the table as sort-enabled and queries headers', () => {
+            const mockTable = {dataset: {} as Record<string, string>, querySelectorAll: vi.fn().mockReturnValue([])}
+            vi.stubGlobal('document', {getElementById: vi.fn().mockReturnValue(mockTable)})
+            makeHelper().enableTableSorting('tableId')
+            expect(mockTable.dataset.sortEnabled).toBe('true')
+            expect(mockTable.querySelectorAll).toHaveBeenCalledWith('th')
+        })
+
+        it('skips headers without data-type and wires click on headers with data-type', () => {
+            const clickListeners: (() => void)[] = []
+            const indicator = {style: {marginLeft: ''}, textContent: ''}
+            const headers = [
+                {
+                    dataset: {type: 'string'},
+                    appendChild: vi.fn(),
+                    addEventListener: vi.fn((_event: string, handler: () => void) => clickListeners.push(handler)),
+                    querySelector: vi.fn(),
+                },
+                {
+                    dataset: {},
+                    appendChild: vi.fn(),
+                    addEventListener: vi.fn(),
+                    querySelector: vi.fn(),
+                },
+            ]
+            const rows = makeTableRows([['b'], ['a']])
+            const appended: typeof rows = []
+            const mockTable = {
+                dataset: {} as Record<string, string>,
+                querySelectorAll: vi.fn().mockReturnValue(headers),
+                tBodies: [{rows, appendChild: (r: typeof rows[0]) => appended.push(r)}],
+            }
+            vi.stubGlobal('document', {
+                getElementById: vi.fn().mockReturnValue(mockTable),
+                createElement: vi.fn().mockReturnValue(indicator),
+            })
+            makeHelper().enableTableSorting('tableId')
+            // Only the header with data-type gets a click listener
+            expect(clickListeners).toHaveLength(1)
+            // Trigger click — should sort and update indicator
+            headers[0].querySelector.mockReturnValue({textContent: ''})
+            clickListeners[0]()
+            expect(appended).toHaveLength(2)
+            expect(indicator.textContent).toBe('▼') // ascending toggled to false → shows ▼
+        })
+    })
+
+    describe('updateInventoryPanels', () => {
+
+        beforeEach(() => {
+            vi.stubGlobal('document', {getElementById: vi.fn().mockImplementation(makeElement)})
+        })
+
+        it('returns early without rendering when templates are not initialised', () => {
+            makeHelper().updateInventoryPanels([])
+            expect(document.getElementById).not.toHaveBeenCalled()
+        })
+
+        it('renders all inventory sections for a full agent inventory', () => {
+            const helper = makeHelper()
+            const internal = helper as unknown as {
+                itemsImageTpl: (...args: unknown[]) => string
+                itemsLabelTpl: (...args: unknown[]) => string
+                keysTpl: (...args: unknown[]) => string
+            }
+            internal.itemsImageTpl = () => ''
+            internal.itemsLabelTpl = () => ''
+            internal.keysTpl = () => ''
+
+            const agents: AgentInventory[] = [{
+                name: 'A1',
+                importedAt: '2024-01-01T00:00:00.000Z',
+                keys: [{guid: 'g1', title: 'Portal', lat: 1, lng: 2, total: 3}],
+                weapons: {EMP_BURSTER_8: 10, ULTRA_STRIKE_8: 5, 'ADA-0': 1, UNKNOWN_WEAPON: 2},
+                resonators: {L8: 20},
+                mods: {RES_SHIELD_RARE: 3, HEATSINK_RARE: 2, EXTRA_SHIELD_RARE: 1, LINK_AMP_RARE: 4},
+                cubes: {XFC: 6},
+                boosts: {APEX: 1, SOME_BEACON: 2},
+            }]
+
+            expect(() => helper.updateInventoryPanels(agents)).not.toThrow()
+            expect(document.getElementById).toHaveBeenCalled()
         })
     })
 })
