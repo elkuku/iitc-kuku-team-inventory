@@ -1,4 +1,4 @@
-import {describe, it, expect, beforeEach, vi} from 'vitest'
+import {describe, it, expect, beforeEach, afterEach, vi} from 'vitest'
 import {SheetsHelper} from './SheetsHelper'
 import type {AgentInventory, Team} from '../../types/Types'
 
@@ -288,6 +288,169 @@ describe('SheetsHelper (data transformation)', () => {
         it('handles empty sheet data gracefully', () => {
             const team = h.reconstructTeam('T', 'id', [], [], [])
             expect(team.agents).toEqual([])
+        })
+    })
+})
+
+// ---------------------------------------------------------------------------
+// Auth / network internals
+// ---------------------------------------------------------------------------
+
+interface SheetsHelperInternals {
+    accessToken: string | undefined
+    tokenExpiresAt: number | undefined
+    isTokenValid(): boolean
+    sheetsRequest(
+        method: string,
+        url: string,
+        body: unknown,
+        onSuccess: (data: unknown) => void,
+        onError: (error: unknown) => void,
+    ): void
+    loadGisScript(onReady: () => void): void
+    withToken(onReady: () => void): void
+}
+
+describe('SheetsHelper (auth / network internals)', () => {
+    let helper: SheetsHelperInternals
+    let store: Record<string, string>
+
+    beforeEach(() => {
+        store = {}
+        vi.stubGlobal('localStorage', {
+            getItem: (key: string) => store[key] ?? undefined,
+            setItem: (key: string, value: string) => { store[key] = value },
+            removeItem: (key: string) => {
+                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+                delete store[key]
+            },
+        })
+        helper = new SheetsHelper() as unknown as SheetsHelperInternals
+    })
+
+    afterEach(() => {
+        vi.unstubAllGlobals()
+    })
+
+    describe('isTokenValid', () => {
+        it('returns false when accessToken is absent', () => {
+            expect(helper.isTokenValid()).toBe(false)
+        })
+
+        it('returns false when accessToken is set but tokenExpiresAt is absent', () => {
+            helper.accessToken = 'tok'
+            expect(helper.isTokenValid()).toBe(false)
+        })
+
+        it('returns false when token has expired', () => {
+            helper.accessToken = 'tok'
+            helper.tokenExpiresAt = Date.now() - 1
+            expect(helper.isTokenValid()).toBe(false)
+        })
+
+        it('returns false when token expires within the 60 s buffer', () => {
+            helper.accessToken = 'tok'
+            helper.tokenExpiresAt = Date.now() + 30_000
+            expect(helper.isTokenValid()).toBe(false)
+        })
+
+        it('returns true when token is valid and outside the buffer', () => {
+            helper.accessToken = 'tok'
+            helper.tokenExpiresAt = Date.now() + 120_000
+            expect(helper.isTokenValid()).toBe(true)
+        })
+    })
+
+    describe('sheetsRequest', () => {
+        it('calls onError immediately when there is no access token', () => {
+            const onError = vi.fn()
+            helper.sheetsRequest('GET', 'http://example.com', undefined, vi.fn(), onError)
+            expect(onError).toHaveBeenCalledWith('No access token')
+        })
+
+        it('calls onSuccess with the parsed JSON body on an ok response', async () => {
+            helper.accessToken = 'mock-token'
+            const responseData = {sheets: []}
+            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+                ok: true,
+                json: () => Promise.resolve(responseData),
+            }))
+
+            const onSuccess = vi.fn()
+            helper.sheetsRequest('GET', 'http://example.com', undefined, onSuccess, vi.fn())
+            await vi.waitFor(() => { expect(onSuccess).toHaveBeenCalledWith(responseData) })
+        })
+
+        it('calls onError with the response text on a non-ok response', async () => {
+            helper.accessToken = 'mock-token'
+            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+                ok: false,
+                text: () => Promise.resolve('Bad Request'),
+            }))
+
+            const onError = vi.fn()
+            helper.sheetsRequest('POST', 'http://example.com', {data: 1}, vi.fn(), onError)
+            await vi.waitFor(() => { expect(onError).toHaveBeenCalledWith('Bad Request') })
+        })
+
+        it('calls onError when fetch itself throws', async () => {
+            helper.accessToken = 'mock-token'
+            const networkError = new Error('Network failure')
+            vi.stubGlobal('fetch', vi.fn().mockRejectedValue(networkError))
+
+            const onError = vi.fn()
+            helper.sheetsRequest('GET', 'http://example.com', undefined, vi.fn(), onError)
+            await vi.waitFor(() => { expect(onError).toHaveBeenCalledWith(networkError) })
+        })
+
+        it('includes the Authorization header with the access token', async () => {
+            helper.accessToken = 'secret'
+            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+                ok: true,
+                json: () => Promise.resolve({}),
+            }))
+
+            helper.sheetsRequest('GET', 'http://example.com', undefined, vi.fn(), vi.fn())
+            await vi.waitFor(() => { expect(vi.mocked(fetch)).toHaveBeenCalled() })
+            const [, options] = vi.mocked(fetch).mock.calls[0] as [string, RequestInit]
+            expect((options.headers as Record<string, string>).Authorization).toBe('Bearer secret')
+        })
+    })
+
+    describe('loadGisScript', () => {
+        it('calls onReady immediately when the script tag already exists', () => {
+            vi.stubGlobal('document', {
+                getElementById: vi.fn().mockReturnValue({id: 'gis-client-script'}),
+            })
+            const onReady = vi.fn()
+            helper.loadGisScript(onReady)
+            expect(onReady).toHaveBeenCalledOnce()
+        })
+
+        it('creates a script tag and appends it to head when not yet loaded', () => {
+            const appendChildSpy = vi.fn()
+            const addEventListenerSpy = vi.fn()
+            const mockScript = {id: '', src: '', addEventListener: addEventListenerSpy}
+            vi.stubGlobal('document', {
+                getElementById: vi.fn(),
+                createElement: vi.fn().mockReturnValue(mockScript),
+                head: {appendChild: appendChildSpy},
+            })
+            const onReady = vi.fn()
+            helper.loadGisScript(onReady)
+            expect(mockScript.id).toBe('gis-client-script')
+            expect(addEventListenerSpy).toHaveBeenCalledWith('load', onReady)
+            expect(appendChildSpy).toHaveBeenCalledWith(mockScript)
+        })
+    })
+
+    describe('withToken', () => {
+        it('calls onReady directly when the token is already valid', () => {
+            helper.accessToken = 'tok'
+            helper.tokenExpiresAt = Date.now() + 120_000
+            const onReady = vi.fn()
+            helper.withToken(onReady)
+            expect(onReady).toHaveBeenCalledOnce()
         })
     })
 })

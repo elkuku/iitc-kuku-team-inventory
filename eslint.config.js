@@ -27,6 +27,7 @@ const config = tseslint.config(
     {
         ignores: [
             "eslint.config.js",
+            "vitest.config.ts",
             "config/",
             "dist/",
             "types/"
