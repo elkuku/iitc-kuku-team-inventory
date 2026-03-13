@@ -1,6 +1,96 @@
-import {describe, it, expect} from 'vitest'
+import {describe, it, expect, beforeEach, vi} from 'vitest'
 import {SheetsHelper} from './SheetsHelper'
 import type {AgentInventory, Team} from '../../types/Types'
+
+const CLIENT_ID_KEY = 'plugin-kuku-team-inventory-sheets-client-id'
+const SPREADSHEET_ID_KEY = 'plugin-kuku-team-inventory-sheets-spreadsheet-id'
+
+describe('SheetsHelper (config / localStorage)', () => {
+    let store: Record<string, string>
+    let helper: SheetsHelper
+
+    beforeEach(() => {
+        store = {}
+        vi.stubGlobal('localStorage', {
+            getItem: (key: string) => store[key] ?? undefined,
+            setItem: (key: string, value: string) => { store[key] = value },
+            removeItem: (key: string) => {
+                // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
+                delete store[key]
+            },
+        })
+        helper = new SheetsHelper()
+    })
+
+    describe('loadConfig', () => {
+        it('returns undefined when both keys are missing', () => {
+            expect(helper.loadConfig()).toBeUndefined()
+        })
+
+        it('returns undefined when only clientId is set', () => {
+            store[CLIENT_ID_KEY] = 'cid'
+            expect(helper.loadConfig()).toBeUndefined()
+        })
+
+        it('returns undefined when only spreadsheetId is set', () => {
+            store[SPREADSHEET_ID_KEY] = 'sid'
+            expect(helper.loadConfig()).toBeUndefined()
+        })
+
+        it('returns the config when both keys are present', () => {
+            store[CLIENT_ID_KEY] = 'my-client-id'
+            store[SPREADSHEET_ID_KEY] = 'my-sheet-id'
+            expect(helper.loadConfig()).toEqual({clientId: 'my-client-id', spreadsheetId: 'my-sheet-id'})
+        })
+    })
+
+    describe('saveConfig', () => {
+        it('persists clientId and spreadsheetId to localStorage', () => {
+            helper.saveConfig({clientId: 'cid', spreadsheetId: 'sid'})
+            expect(store[CLIENT_ID_KEY]).toBe('cid')
+            expect(store[SPREADSHEET_ID_KEY]).toBe('sid')
+        })
+
+        it('allows loadConfig to return the saved values', () => {
+            helper.saveConfig({clientId: 'cid', spreadsheetId: 'sid'})
+            expect(helper.loadConfig()).toEqual({clientId: 'cid', spreadsheetId: 'sid'})
+        })
+
+        it('overwrites previously saved config', () => {
+            helper.saveConfig({clientId: 'old-cid', spreadsheetId: 'old-sid'})
+            helper.saveConfig({clientId: 'new-cid', spreadsheetId: 'new-sid'})
+            expect(helper.loadConfig()).toEqual({clientId: 'new-cid', spreadsheetId: 'new-sid'})
+        })
+    })
+
+    describe('clearConfig', () => {
+        it('removes both keys so loadConfig returns undefined', () => {
+            helper.saveConfig({clientId: 'cid', spreadsheetId: 'sid'})
+            helper.clearConfig()
+            expect(helper.loadConfig()).toBeUndefined()
+        })
+
+        it('is safe to call when nothing is stored', () => {
+            expect(() => helper.clearConfig()).not.toThrow()
+        })
+    })
+
+    describe('pushToSheets / pullFromSheets without config', () => {
+        it('pushToSheets sets an error status when no config', () => {
+            const element = {textContent: ''}
+            vi.stubGlobal('document', {getElementById: vi.fn().mockReturnValue(element)})
+            helper.pushToSheets([], 'status-el')
+            expect(element.textContent).toContain('Error')
+        })
+
+        it('pullFromSheets sets an error status when no config', () => {
+            const element = {textContent: ''}
+            vi.stubGlobal('document', {getElementById: vi.fn().mockReturnValue(element)})
+            helper.pullFromSheets('status-el', vi.fn())
+            expect(element.textContent).toContain('Error')
+        })
+    })
+})
 
 // Typed interface exposing the private pure-logic methods under test
 interface SheetsHelperTestable {

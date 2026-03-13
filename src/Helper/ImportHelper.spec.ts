@@ -2,8 +2,39 @@ import {describe, it, expect} from 'vitest'
 import {ImportHelper} from './ImportHelper'
 import type {AgentExportData} from '../../types/Types'
 
+const makeFileMock = (content: string): File =>
+    ({text: () => Promise.resolve(content)}) as unknown as File
+
 describe('ImportHelper', () => {
     const helper = new ImportHelper()
+
+    describe('readFile', () => {
+        it('parses JSON from a file and returns AgentExportData', async () => {
+            const data = {weapons: {XMP8: 5}, keys: []}
+            const result = await helper.readFile(makeFileMock(JSON.stringify(data)))
+            expect(result).toEqual(data)
+        })
+
+        it('throws on invalid JSON', async () => {
+            await expect(helper.readFile(makeFileMock('not-json'))).rejects.toThrow()
+        })
+    })
+
+    describe('readTeamsFile', () => {
+        it('parses a JSON array of teams', async () => {
+            const teams = [{id: 't1', name: 'Alpha', agents: []}]
+            const result = await helper.readTeamsFile(makeFileMock(JSON.stringify(teams)))
+            expect(result).toEqual(teams)
+        })
+
+        it('throws when the JSON is not an array', async () => {
+            await expect(helper.readTeamsFile(makeFileMock('{"not": "array"}'))).rejects.toThrow('Expected an array')
+        })
+
+        it('throws on invalid JSON', async () => {
+            await expect(helper.readTeamsFile(makeFileMock('bad json'))).rejects.toThrow()
+        })
+    })
 
     describe('createAgent', () => {
         it('creates an agent with all fields from export data', () => {
