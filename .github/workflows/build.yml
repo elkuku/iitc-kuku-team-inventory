@@ -47,11 +47,12 @@ jobs:
       # E2E tests (Playwright)
       # -------------------------------
 
-      - name: Checkout IITC plugin tester (provides IITC core build)
-        uses: actions/checkout@v4
-        with:
-          repository: elkuku/iitc-kuku-plugin-tester
-          path: iitc-plugin-tester
+      - name: Download IITC core build
+        run: |
+          mkdir -p iitc-build
+          curl -fsSL "https://github.com/IITC-CE/ingress-intel-total-conversion/releases/download/0.42.2/release-0.42.2.zip" -o iitc-release.zip
+          unzip -p iitc-release.zip total-conversion-build.user.js > iitc-build/total-conversion-build.js
+          rm iitc-release.zip
 
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
@@ -59,7 +60,7 @@ jobs:
       - name: Run e2e tests
         run: yarn test:e2e
         env:
-          IITC_DIR: ${{ github.workspace }}/iitc-plugin-tester/iitc
+          IITC_DIR: ${{ github.workspace }}/iitc-build
 
       - name: Upload e2e report on failure
         if: failure()
