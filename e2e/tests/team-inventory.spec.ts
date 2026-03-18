@@ -126,6 +126,14 @@ async function openDialog(page: Page): Promise<void> {
   await page.waitForSelector(`${TABS_CONTAINER}.ui-tabs`, { timeout: 10_000 });
 }
 
+/** Full-page screenshot with the IITC clock masked to prevent flaky diffs. */
+async function screenshot(page: Page, name: string): Promise<void> {
+  await expect(page).toHaveScreenshot(name, {
+    fullPage: true,
+    mask: [page.locator('#chatinput')],
+  });
+}
+
 /** Click a tab by name and wait for its panel to become active. */
 async function clickTab(page: Page, tabName: string): Promise<void> {
   await page.click(`a[href="#${PLUGIN_PREFIX}-${tabName}-Panel"]`);
@@ -146,10 +154,7 @@ test.describe('KuKuTeamInventory plugin', () => {
     // Plugin toolbox button
     await expect(page.locator(TOOLBOX_BTN)).toBeVisible();
 
-    await expect(page).toHaveScreenshot('01-iitc-loaded.png', {
-      fullPage: true,
-      maxDiffPixels: 1500,
-    });
+    await screenshot(page, '01-iitc-loaded.png');
   });
 
   test('opens the Team Inventory dialog', async ({ page }) => {
@@ -158,10 +163,7 @@ test.describe('KuKuTeamInventory plugin', () => {
     await expect(page.locator('.ui-dialog-title')).toContainText('Team Inventory');
     await expect(page.locator(TABS_CONTAINER)).toBeVisible();
 
-    await expect(page).toHaveScreenshot('02-dialog-open.png', {
-      fullPage: true,
-      maxDiffPixels: 1500,
-    });
+    await screenshot(page, '02-dialog-open.png');
   });
 
   test('Teams panel — default view (all teams)', async ({ page }) => {
@@ -171,10 +173,7 @@ test.describe('KuKuTeamInventory plugin', () => {
     // Team selector should list both teams
     await expect(page.locator(`#${PLUGIN_PREFIX}-team-select`)).toBeVisible();
 
-    await expect(page).toHaveScreenshot('03-teams-all.png', {
-      fullPage: true,
-      maxDiffPixels: 1500,
-    });
+    await screenshot(page, '03-teams-all.png');
   });
 
   test('Teams panel — single team selected', async ({ page }) => {
@@ -185,10 +184,7 @@ test.describe('KuKuTeamInventory plugin', () => {
     await page.selectOption(`#${PLUGIN_PREFIX}-team-select`, 'team-alpha');
     await page.waitForTimeout(300);
 
-    await expect(page).toHaveScreenshot('04-teams-alpha.png', {
-      fullPage: true,
-      maxDiffPixels: 1500,
-    });
+    await screenshot(page, '04-teams-alpha.png');
   });
 
   test('Inventory (Equipment) panel', async ({ page }) => {
@@ -197,10 +193,7 @@ test.describe('KuKuTeamInventory plugin', () => {
 
     await expect(page.locator(`#${PLUGIN_PREFIX}-Resonators-Container`)).toBeVisible();
 
-    await expect(page).toHaveScreenshot('05-inventory-panel.png', {
-      fullPage: true,
-      maxDiffPixels: 1500,
-    });
+    await screenshot(page, '05-inventory-panel.png');
   });
 
   test('Keys panel', async ({ page }) => {
@@ -209,10 +202,7 @@ test.describe('KuKuTeamInventory plugin', () => {
 
     await expect(page.locator(`#${PLUGIN_PREFIX}-Keys-Container`)).toBeVisible();
 
-    await expect(page).toHaveScreenshot('06-keys-panel.png', {
-      fullPage: true,
-      maxDiffPixels: 1500,
-    });
+    await screenshot(page, '06-keys-panel.png');
   });
 
   test('Other panel — cubes and boosts', async ({ page }) => {
@@ -221,10 +211,7 @@ test.describe('KuKuTeamInventory plugin', () => {
 
     await expect(page.locator(`#${PLUGIN_PREFIX}-Cubes-Container`)).toBeVisible();
 
-    await expect(page).toHaveScreenshot('07-other-panel.png', {
-      fullPage: true,
-      maxDiffPixels: 1500,
-    });
+    await screenshot(page, '07-other-panel.png');
   });
 
   test('Export panel', async ({ page }) => {
@@ -233,10 +220,7 @@ test.describe('KuKuTeamInventory plugin', () => {
 
     await expect(page.locator(`#${PLUGIN_PREFIX}-Export-Panel`)).toBeVisible();
 
-    await expect(page).toHaveScreenshot('08-export-panel.png', {
-      fullPage: true,
-      maxDiffPixels: 1500,
-    });
+    await screenshot(page, '08-export-panel.png');
   });
 
   test('Settings panel', async ({ page }) => {
@@ -245,10 +229,7 @@ test.describe('KuKuTeamInventory plugin', () => {
 
     await expect(page.locator(`#${PLUGIN_PREFIX}-Settings-Panel`)).toBeVisible();
 
-    await expect(page).toHaveScreenshot('09-settings-panel.png', {
-      fullPage: true,
-      maxDiffPixels: 1500,
-    });
+    await screenshot(page, '09-settings-panel.png');
   });
 
   test('Sheets panel', async ({ page }) => {
@@ -257,10 +238,7 @@ test.describe('KuKuTeamInventory plugin', () => {
 
     await expect(page.locator(`#${PLUGIN_PREFIX}-Sheets-Panel`)).toBeVisible();
 
-    await expect(page).toHaveScreenshot('10-sheets-panel.png', {
-      fullPage: true,
-      maxDiffPixels: 1500,
-    });
+    await screenshot(page, '10-sheets-panel.png');
   });
 
   test('Teams panel — Team Gamma with two agents', async ({ page }) => {
@@ -272,10 +250,7 @@ test.describe('KuKuTeamInventory plugin', () => {
     // Both agents should appear
     await expect(page.locator('.agents-table tbody tr')).toHaveCount(2);
 
-    await expect(page).toHaveScreenshot('11-teams-gamma.png', {
-      fullPage: true,
-      maxDiffPixels: 1500,
-    });
+    await screenshot(page, '11-teams-gamma.png');
   });
 
   test('focus — clicking Focus highlights an agent row', async ({ page }) => {
@@ -296,10 +271,7 @@ test.describe('KuKuTeamInventory plugin', () => {
     await expect(page.locator('tr.agent-row-focused')).toHaveCount(1);
     await expect(page.locator('tr.agent-row-focused td strong')).toHaveText('AgentSloane');
 
-    await expect(page).toHaveScreenshot('12-focus-active.png', {
-      fullPage: true,
-      maxDiffPixels: 1500,
-    });
+    await screenshot(page, '12-focus-active.png');
   });
 
   test('focus — Clear removes the highlight', async ({ page }) => {
@@ -321,9 +293,6 @@ test.describe('KuKuTeamInventory plugin', () => {
     await expect(page.locator('tr.agent-row-focused')).toHaveCount(0);
     await expect(page.locator('.agents-table button', { hasText: 'Focus' })).toHaveCount(2);
 
-    await expect(page).toHaveScreenshot('13-focus-cleared.png', {
-      fullPage: true,
-      maxDiffPixels: 1500,
-    });
+    await screenshot(page, '13-focus-cleared.png');
   });
 });
