@@ -17,7 +17,7 @@ const SAMPLE_TEAMS = [
     agents: [
       {
         name: 'AgentSloane',
-        importedAt: '2025-01-15T09:30:00.000Z',
+        importedAt: '2025-01-15T12:00:00.000Z',
         keys: [
           { guid: 'portal-eiffel',     title: 'Eiffel Tower',       lat: 48.8584, lng: 2.2945, total: 5  },
           { guid: 'portal-louvre',     title: 'Louvre Museum',       lat: 48.8606, lng: 2.3376, total: 12 },
@@ -32,7 +32,7 @@ const SAMPLE_TEAMS = [
       },
       {
         name: 'AgentKraken',
-        importedAt: '2025-01-16T14:00:00.000Z',
+        importedAt: '2025-01-16T12:00:00.000Z',
         keys: [
           { guid: 'portal-eiffel', title: 'Eiffel Tower',  lat: 48.8584, lng: 2.2945, total: 8 },
           { guid: 'portal-sacre',  title: 'Sacré-Cœur',    lat: 48.8867, lng: 2.3431, total: 7 },
@@ -57,7 +57,7 @@ const SAMPLE_TEAMS = [
     agents: [
       {
         name: 'AgentNova',
-        importedAt: '2025-02-01T08:00:00.000Z',
+        importedAt: '2025-02-01T12:00:00.000Z',
         keys: [
           { guid: 'portal-colosseum', title: 'Colosseum',      lat: 41.8902, lng: 12.4922, total: 9 },
           { guid: 'portal-trevi',     title: 'Trevi Fountain',  lat: 41.9009, lng: 12.4833, total: 6 },
@@ -71,7 +71,7 @@ const SAMPLE_TEAMS = [
       },
       {
         name: 'AgentOrion',
-        importedAt: '2025-02-03T11:15:00.000Z',
+        importedAt: '2025-02-03T12:00:00.000Z',
         keys: [
           { guid: 'portal-colosseum', title: 'Colosseum',    lat: 41.8902, lng: 12.4922, total: 3 },
           { guid: 'portal-forum',     title: 'Roman Forum',  lat: 41.8925, lng: 12.4853, total: 7 },
