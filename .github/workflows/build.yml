@@ -50,7 +50,7 @@ jobs:
       - name: Download IITC core build
         run: |
           mkdir -p iitc-build
-          curl -fsSL "https://github.com/IITC-CE/ingress-intel-total-conversion/releases/download/0.42.2/release-0.42.2.zip" -o iitc-release.zip
+          curl -fsSL "https://github.com/IITC-CE/ingress-intel-total-conversion/releases/download/v0.42.2/release-0.42.2.zip" -o iitc-release.zip
           unzip -p iitc-release.zip total-conversion-build.user.js > iitc-build/total-conversion-build.js
           rm iitc-release.zip
 
