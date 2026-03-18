@@ -29,8 +29,10 @@ const config = tseslint.config(
             "eslint.config.js",
             "vitest.config.ts",
             "vitest.browser.config.ts",
+            "playwright.e2e.config.ts",
             "config/",
             "dist/",
+            "e2e/",
             "types/"
         ]
     },

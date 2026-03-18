@@ -5,3 +5,11 @@
 /test-data/
 /coverage/
 /screenshots/
+
+# E2E test artifacts
+/test-results/
+/e2e/playwright-report/
+/e2e/test-results/
+# Compiled JS files emitted by Playwright alongside TypeScript sources
+/playwright.e2e.config.js
+/e2e/tests/**/*.js

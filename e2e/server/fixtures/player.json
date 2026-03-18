@@ -1,0 +1,12 @@
+{
+  "ap": "1000000",
+  "energy": 5000,
+  "available_invites": 0,
+  "nickname": "TestAgent",
+  "team": "RESISTANCE",
+  "verified_level": 8,
+  "level": 8,
+  "min_ap_for_current_level": 600000,
+  "min_ap_for_next_level": 0,
+  "xm_capacity": 6000
+}
