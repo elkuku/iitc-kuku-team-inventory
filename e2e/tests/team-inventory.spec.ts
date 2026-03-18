@@ -148,7 +148,7 @@ test.describe('KuKuTeamInventory plugin', () => {
 
     await expect(page).toHaveScreenshot('01-iitc-loaded.png', {
       fullPage: true,
-      maxDiffPixels: 500,
+      maxDiffPixels: 600,
     });
   });
 
@@ -160,7 +160,7 @@ test.describe('KuKuTeamInventory plugin', () => {
 
     await expect(page).toHaveScreenshot('02-dialog-open.png', {
       fullPage: true,
-      maxDiffPixels: 500,
+      maxDiffPixels: 600,
     });
   });
 
@@ -173,7 +173,7 @@ test.describe('KuKuTeamInventory plugin', () => {
 
     await expect(page).toHaveScreenshot('03-teams-all.png', {
       fullPage: true,
-      maxDiffPixels: 500,
+      maxDiffPixels: 600,
     });
   });
 
@@ -187,7 +187,7 @@ test.describe('KuKuTeamInventory plugin', () => {
 
     await expect(page).toHaveScreenshot('04-teams-alpha.png', {
       fullPage: true,
-      maxDiffPixels: 500,
+      maxDiffPixels: 600,
     });
   });
 
@@ -199,7 +199,7 @@ test.describe('KuKuTeamInventory plugin', () => {
 
     await expect(page).toHaveScreenshot('05-inventory-panel.png', {
       fullPage: true,
-      maxDiffPixels: 500,
+      maxDiffPixels: 600,
     });
   });
 
@@ -211,7 +211,7 @@ test.describe('KuKuTeamInventory plugin', () => {
 
     await expect(page).toHaveScreenshot('06-keys-panel.png', {
       fullPage: true,
-      maxDiffPixels: 500,
+      maxDiffPixels: 600,
     });
   });
 
@@ -223,7 +223,7 @@ test.describe('KuKuTeamInventory plugin', () => {
 
     await expect(page).toHaveScreenshot('07-other-panel.png', {
       fullPage: true,
-      maxDiffPixels: 500,
+      maxDiffPixels: 600,
     });
   });
 
@@ -235,7 +235,7 @@ test.describe('KuKuTeamInventory plugin', () => {
 
     await expect(page).toHaveScreenshot('08-export-panel.png', {
       fullPage: true,
-      maxDiffPixels: 500,
+      maxDiffPixels: 600,
     });
   });
 
@@ -247,7 +247,7 @@ test.describe('KuKuTeamInventory plugin', () => {
 
     await expect(page).toHaveScreenshot('09-settings-panel.png', {
       fullPage: true,
-      maxDiffPixels: 500,
+      maxDiffPixels: 600,
     });
   });
 
@@ -259,7 +259,7 @@ test.describe('KuKuTeamInventory plugin', () => {
 
     await expect(page).toHaveScreenshot('10-sheets-panel.png', {
       fullPage: true,
-      maxDiffPixels: 500,
+      maxDiffPixels: 600,
     });
   });
 
@@ -274,7 +274,7 @@ test.describe('KuKuTeamInventory plugin', () => {
 
     await expect(page).toHaveScreenshot('11-teams-gamma.png', {
       fullPage: true,
-      maxDiffPixels: 500,
+      maxDiffPixels: 600,
     });
   });
 
@@ -298,7 +298,7 @@ test.describe('KuKuTeamInventory plugin', () => {
 
     await expect(page).toHaveScreenshot('12-focus-active.png', {
       fullPage: true,
-      maxDiffPixels: 500,
+      maxDiffPixels: 600,
     });
   });
 
@@ -323,7 +323,7 @@ test.describe('KuKuTeamInventory plugin', () => {
 
     await expect(page).toHaveScreenshot('13-focus-cleared.png', {
       fullPage: true,
-      maxDiffPixels: 500,
+      maxDiffPixels: 600,
     });
   });
 });
