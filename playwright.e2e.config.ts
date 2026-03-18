@@ -4,7 +4,8 @@ import { fileURLToPath } from 'url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-const IITC_DIR = path.join(__dirname, '../iitc-kuku-plugin-tester/iitc');
+// Allow CI to override via env var; fall back to the sibling-repo path for local dev.
+const IITC_DIR = process.env.IITC_DIR ?? path.join(__dirname, '../iitc-kuku-plugin-tester/iitc');
 const port = parseInt(process.env.PORT ?? '3001', 10);
 
 export default defineConfig({
@@ -20,7 +21,6 @@ export default defineConfig({
     headless: true,
     viewport: { width: 1280, height: 900 },
     baseURL: `http://localhost:${port}`,
-    tsconfig: path.join(__dirname, 'e2e/tsconfig.json'),
   },
   projects: [
     {

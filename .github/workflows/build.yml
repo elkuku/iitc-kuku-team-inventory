@@ -43,6 +43,32 @@ jobs:
           mkdir -p build/dev
           cp -r dist/* build/dev/
 
+      # -------------------------------
+      # E2E tests (Playwright)
+      # -------------------------------
+
+      - name: Checkout IITC plugin tester (provides IITC core build)
+        uses: actions/checkout@v4
+        with:
+          repository: elkuku/iitc-kuku-plugin-tester
+          path: iitc-plugin-tester
+
+      - name: Install Playwright browsers
+        run: npx playwright install chromium --with-deps
+
+      - name: Run e2e tests
+        run: yarn test:e2e
+        env:
+          IITC_DIR: ${{ github.workspace }}/iitc-plugin-tester/iitc
+
+      - name: Upload e2e report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-playwright-report
+          path: e2e/playwright-report/
+          retention-days: 7
+
         # -------------------------------
         # Detect latest tag (if any)
         # -------------------------------
