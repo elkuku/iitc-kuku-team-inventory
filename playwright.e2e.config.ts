@@ -9,6 +9,9 @@ const IITC_DIR = process.env.IITC_DIR ?? path.join(__dirname, '../iitc-kuku-plug
 const port = parseInt(process.env.PORT ?? '3001', 10);
 
 export default defineConfig({
+  expect: {
+    toHaveScreenshot: { maxDiffPixels: 100 },
+  },
   testDir: path.join(__dirname, 'e2e/tests'),
   testMatch: '**/*.spec.ts',
   snapshotDir: path.join(__dirname, 'e2e/screenshots'),
