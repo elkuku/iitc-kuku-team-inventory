@@ -10,6 +10,7 @@
 /test-results/
 /e2e/playwright-report/
 /e2e/test-results/
-# Compiled JS files emitted by Playwright alongside TypeScript sources
+# Compiled JS files emitted by Playwright/ts-node alongside TypeScript sources
 /playwright.e2e.config.js
 /e2e/tests/**/*.js
+/e2e/server/**/*.js

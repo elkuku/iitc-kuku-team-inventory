@@ -1,5 +1,6 @@
 {
   "dependencies": {
+    "iitc-kuku-plugin-tester": "^1.0.1",
     "iitcpluginkit": "^1.9.6"
   },
   "license": "Unlicense",

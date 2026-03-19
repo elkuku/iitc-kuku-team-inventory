@@ -1,5 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
-import { setupIITCRoutes, suppressIITCDialogs } from './helpers/iitc-page';
+import { setupIITCRoutes, suppressIITCDialogs } from 'iitc-kuku-plugin-tester/tests/helpers/iitc-page';
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -113,6 +113,13 @@ test.beforeEach(async ({ page }) => {
   await page.goto('/');
   await page.waitForSelector('[data-iitc-fully-loaded="true"]', {
     timeout: 30_000,
+  });
+
+  // Close the test-plugin boot dialog if it appeared
+  await page.evaluate(() => {
+    const el = document.querySelector('#dialog-test-plugin-hello');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    if (el) (window as any).$(el).dialog('close');
   });
 });
 

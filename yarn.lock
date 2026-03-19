@@ -2143,6 +2143,15 @@ ignore@^7.0.5:
   resolved "https://registry.yarnpkg.com/ignore/-/ignore-7.0.5.tgz#4cb5f6cd7d4c7ab0365738c7aea888baa6d7efd9"
   integrity sha512-Hs59xBNfUIunMFgWAbGX5cq6893IbWg4KnrjbYwX3tx0ztorVgTDA6B2sxf8ejHJ4wz8BqGUMYlnzNBer5NvGg==
 
+iitc-kuku-plugin-tester@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/iitc-kuku-plugin-tester/-/iitc-kuku-plugin-tester-1.0.1.tgz#c22e2152bed6c7a0d5d2617262b6460a70c73e1e"
+  integrity sha512-ecP11SVP27h89h/Bkdz1i6NPfMLZC5HWd6ik640VySto3UVt40o8q4l8vaVmzKx34wNE56Jq/HmdhjgwFxAE1A==
+  dependencies:
+    express "^4.18.2"
+    ts-node "^10.9.2"
+    typescript "^5.4.0"
+
 iitcpluginkit@^1.9.6:
   version "1.9.6"
   resolved "https://registry.yarnpkg.com/iitcpluginkit/-/iitcpluginkit-1.9.6.tgz#bcef8ad49a0f03af7921fc2c32227d5945d1adcb"
@@ -3871,7 +3880,7 @@ typescript-eslint@^8.53.0:
     "@typescript-eslint/typescript-estree" "8.53.0"
     "@typescript-eslint/utils" "8.53.0"
 
-typescript@^5.0.2:
+typescript@^5.0.2, typescript@^5.4.0:
   version "5.9.3"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-5.9.3.tgz#5b4f59e15310ab17a216f5d6cf53ee476ede670f"
   integrity sha512-jl1vZzPDinLr9eUt3J/t7V6FgNEw9QjvBPdysz9KfQDD41fQrC2Y4vKQdiaUpFT4bXlb1RHhLpp8wtm6M5TgSw==

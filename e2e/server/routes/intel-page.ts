@@ -12,6 +12,10 @@ const PLUGINS_DIR =
 // specified via PLUGIN_FILE and will be appended after PLUGINS_DIR entries.
 const EXTRA_PLUGIN_FILE = process.env.PLUGIN_FILE ?? null;
 
+// Boot-signal plugin from the package — always appended so [data-iitc-fully-loaded]
+// is always set, regardless of what is in PLUGINS_DIR.
+const BUILTIN_TEST_PLUGIN = require.resolve('iitc-kuku-plugin-tester/tests/test-plugin.js');
+
 const player = JSON.parse(
   fs.readFileSync(path.join(FIXTURES_DIR, 'player.json'), 'utf8')
 );
@@ -31,6 +35,11 @@ function loadPlugins(): string {
         });
       });
   }
+
+  entries.push({
+    name: path.basename(BUILTIN_TEST_PLUGIN),
+    content: fs.readFileSync(BUILTIN_TEST_PLUGIN, 'utf8'),
+  });
 
   if (EXTRA_PLUGIN_FILE && fs.existsSync(EXTRA_PLUGIN_FILE)) {
     entries.push({
