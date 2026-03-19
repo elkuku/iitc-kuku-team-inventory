@@ -115,7 +115,7 @@ export class DialogHelper {
 
         const agentData = team.agents.map(agent => ({
             name: agent.name,
-            importedAt: new Date(agent.importedAt).toLocaleString(),
+            importedAt: new Date(agent.importedAt).toISOString().slice(0, 16).replace('T', ' '),
             keyCount: agent.keys.reduce((sum, k) => sum + k.total, 0),
             keyPortals: agent.keys.length,
             focused: agent.name === focusedAgent,
