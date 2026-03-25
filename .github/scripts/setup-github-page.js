@@ -41,14 +41,6 @@ if (fs.existsSync('build/dev')) {
         .map(entry => entry.name)
 }
 
-const metaFile = releaseFiles.filter(fileName => fileName.endsWith('.meta.js'))[0]
-let version = 'n/a'
-if (metaFile) {
-    const meta = fs.readFileSync(`build/release/${metaFile}`, 'utf8')
-    const match = meta.match(/^\s*\/\/\s*@version\s+(.+)$/m)
-    version = match ? match[1].trim() : 'n/a'
-}
-
 const pluginData = JSON.parse(
     fs.readFileSync('plugin.json', 'utf8'),
 )
@@ -74,7 +66,22 @@ let template = fs.readFileSync('gh_page/index.html', 'utf8')
 const projectName = pluginData.name.replace('IITC plugin: ', '')
 
 const raw = fs.readFileSync('build/changelog.json', 'utf8')
-const tags = JSON.parse(raw);
+const tags = JSON.parse(raw)
+
+let version = 'n/a', releaseDate = 'n/a'
+
+if (tags[0]) {
+    version = tags[0].name
+    releaseDate = tags[0].date
+} else {
+    const metaFile = releaseFiles.filter(fileName => fileName.endsWith('.meta.js'))[0]
+    if (metaFile) {
+        const meta = fs.readFileSync(`build/release/${metaFile}`, 'utf8')
+        const match = meta.match(/^\s*\/\/\s*@version\s+(.+)$/m)
+        version = match ? match[1].trim() : 'n/a'
+    }
+}
+
 const changelog = tags.map(tag => `
       <tr>
         <td class="changelog-version">${escapeHtml(tag.name)}</td>
@@ -114,11 +121,29 @@ template = template
     .replace('{{DEV_LINKS}}', devLinks)
     .replaceAll('{{PROJECT_NAME}}', projectName)
     .replaceAll('{{PROJECT_VERSION}}', version)
+    .replaceAll('{{RELEASE_DATE}}', releaseDate)
     .replaceAll('{{LAST_UPDATED}}', formattedDate)
     .replace('{{PROJECT_DESCRIPTION}}', pluginData.description)
     .replace('{{CHANGELOG}}', changelog)
     .replace('{{COVERAGE_SUMMARY}}', coverageSummary)
 
 fs.writeFileSync('gh_page/index.html', template, 'utf8')
+
+// Write plugin.json for the aggregator index (https://elkuku.github.io/iitc-plugins/)
+const aggregatorMeta = {
+    name:        pluginData.name,
+    id:          pluginData.id,
+    category:    pluginData.category,
+    description: pluginData.description,
+    author:      pluginData.author,
+    downloadURL: pluginData.downloadURL,
+    version:     version !== 'n/a' ? version : undefined,
+    publishedAt: releaseDate !== 'n/a' ? releaseDate : undefined,
+}
+
+// Remove undefined fields
+Object.keys(aggregatorMeta).forEach(k => aggregatorMeta[k] === undefined && delete aggregatorMeta[k])
+
+fs.writeFileSync('gh_page/plugin.json', JSON.stringify(aggregatorMeta, null, 2), 'utf8')
 
 console.log('Finished =;)')
