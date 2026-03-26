@@ -115,7 +115,7 @@ export class SheetsHelper {
         const url = `${SHEETS_API_BASE}/${config.spreadsheetId}:batchUpdate`
         const body = {requests: [{addSheet: {properties: {title: tabName}}}]}
         this.sheetsRequest('POST', url, body, () => { onCreated() }, (error: unknown) => {
-            if (typeof error === 'string' && error.includes('already exists')) {
+            if (typeof error === 'string' && (error.includes('already exists') || error.includes('INVALID_ARGUMENT'))) {
                 onCreated()
                 return
             }

@@ -830,6 +830,30 @@ describe('SheetsHelper (auth / network internals)', () => {
             helper.writeTeamCategory(config, team, 'Other', onDone)
             await vi.waitFor(() => { expect(onDone).toHaveBeenCalledOnce() })
         })
+
+        it('calls onDone when the tab already exists with a localized (non-English) error message', async () => {
+            helper.accessToken = 'tok'
+            let callCount = 0
+            vi.stubGlobal('fetch', vi.fn().mockImplementation(() => {
+                callCount++
+                if (callCount === 1) {
+                    return Promise.resolve({
+                        ok: false,
+                        text: () => Promise.resolve(JSON.stringify({
+                            error: {
+                                code: 400,
+                                message: 'Invalid requests[0].addSheet: Es ist bereits ein Tabellenblatt mit dem Namen "Alpha - Keys" vorhanden. Geben Sie einen anderen Namen ein.',
+                                status: 'INVALID_ARGUMENT',
+                            },
+                        })),
+                    })
+                }
+                return Promise.resolve({ok: true, json: () => Promise.resolve({})})
+            }))
+            const onDone = vi.fn()
+            helper.writeTeamCategory(config, team, 'Keys', onDone)
+            await vi.waitFor(() => { expect(onDone).toHaveBeenCalledOnce() })
+        })
     })
 
     describe('writeAllSheets', () => {
